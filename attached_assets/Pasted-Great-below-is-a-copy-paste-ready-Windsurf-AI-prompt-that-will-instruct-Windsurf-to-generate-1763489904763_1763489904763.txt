@@ -1,0 +1,292 @@
+Great — below is a **copy-paste-ready Windsurf AI prompt** that will instruct Windsurf to **generate the full Confluence app (v0B)**: code, file structure, backend, frontend, API endpoints, DB schema, LLM prompts for contact enrichment and intro generation, tests, and deploy notes.
+
+Key constraints baked in:
+
+* **No LinkedIn OAuth** (CSV/manual/profile-URL only)
+* **Direct + one-hop indirect intros only** (no multi-hop)
+* **Privacy-first**: no exposing other users’ raw contacts — indirect matches are flagged and connector consent is required
+* **Solo-developer friendly**: simple stack, clear files, minimal infra
+
+---
+
+# Windsurf Prompt — Build the **Confluence** App (Copy-Paste Ready)
+
+You are an expert full-stack engineer and code generator. Build a complete, production-ready Confluence app (v0B MVP) that implements a “direct + one-hop indirect warm intro” system for early-career talent. Produce code, file/folder layout, README, architecture diagram text, DB schema, API docs, LLM prompt templates, sample front-end pages, and basic tests. Keep everything simple, well-documented, and easy for a single developer to run locally and deploy.
+
+## Project summary (what to build)
+
+Confluence is a web app where users:
+
+* sign up (email auth)
+* upload contacts (LinkedIn CSV / manual entry / paste LinkedIn public URL)
+* have contacts enriched (company, title, industry) using an LLM
+* search by **company**, **industry**, **role**, or **keyword**
+* see **direct** matches (their own contacts)
+* see **indirect** matches (another Confluence user has a contact at that target company) — shown as “Indirect path available via [Connector]”, but do **not** reveal connector’s contact until they accept the request
+* request an intro via the connector; connector can accept or decline
+* system generates suggested messages for user->connector and connector->target using an LLM
+* connectors can mark intros as Completed / Rejected (simple trust/score tracking)
+* admin view to see metrics and basic moderation
+
+## Tech stack (must use these or justify alternatives)
+
+* Frontend: **Next.js (App Router)** + **React** + **Tailwind CSS**
+* Backend: **Supabase** (Auth + Postgres + Storage) or Postgres if Supabase not preferred
+* Server functions: **Vercel Serverless Functions** or Supabase Edge Functions
+* LLM: make LLM provider pluggable via env var (support DeepSeek/Windsurf/OpenAI). Provide LLM prompt templates for enrichment and intro generation.
+* Vector DB: **not required** for v0B (skip embeddings)
+* Deployment: Vercel (frontend) + Supabase (db), provide scripts and .env.sample
+
+## Deliverables (what Windsurf should output)
+
+1. Full project file/folder tree with code for frontend, backend functions, and sql/migrations.
+2. README with dev setup, env vars, run & deploy commands.
+3. DB schema (SQL migration) for users, contacts, enriched_contacts, intro_requests, connectors, metrics.
+4. API endpoints and OpenAPI-like docs:
+
+   * POST /api/signup (if needed)
+   * POST /api/contacts/upload (CSV)
+   * POST /api/contacts/add (manual)
+   * POST /api/contacts/enrich (internal; trigger LLM enrichment)
+   * GET /api/search?q=
+   * POST /api/intro/request
+   * POST /api/intro/respond (accept/decline)
+   * POST /api/intro/complete
+   * GET /api/dashboard/stats
+5. Frontend pages/components:
+
+   * / (landing)
+   * /signup, /login
+   * /onboard (upload CSV / manual entry / paste LinkedIn URL)
+   * /dashboard (search bar, results with direct/indirect sections)
+   * /contact/:id (contact details + message generation)
+   * /intros (requests you made / requests to you)
+   * /admin (metrics)
+   * UI components: search box, result card, request modal, connector modal, toast notifications
+6. LLM prompt templates and exact prompt text for:
+
+   * Contact enrichment (CSV row -> JSON: name, company, title, industry, seniority, location, confidence)
+   * Industry classification (company -> industry tag)
+   * Intro-message generation (user->connector & connector->target templates)
+   * Privacy-safe phrasing for indirect results
+7. Minimal client-side logic to compute indirect matches:
+
+   * Match by company name normalization; if any other user has a contact with same company, surface “Indirect intro available via connector”
+   * Provide confidence score derived from exact company match + title seniority
+8. Simple trust model:
+
+   * connectors have `intro_success_count` & `intro_response_rate`
+   * users must have at least 5 contacts added to request > 3 indirect intros per week (rate-limiting to prevent freeloading)
+9. Tests:
+
+   * unit tests for enrichment parsing
+   * integration tests for upload → enrich → search → request intro flows
+10. CI / deploy hints (Vercel + Supabase)
+11. Simple diagram specs (shapes & layout) describing the architecture for use in a slide
+
+## Functional & UX constraints
+
+* **Privacy first**: never reveal another user’s contact details until that connector accepts the request (connector must click accept to expose target contact to requester).
+* **No OAuth**: user uploads CSV or manual entry; provide instructions for LinkedIn export in README.
+* **No multi-hop**: only direct (user->contact) and indirect one-hop (user->other user who has contact->target). Indirect results always go through a connector consent flow.
+* **Minimal friction**: keep onboarding painless; optional UX for manual quick-add.
+* **Solo-developer friendly code**: deliver clear functions, comments, and explicit dev server instructions.
+
+---
+
+## Database Schema (deliver SQL)
+
+Create tables:
+
+* users (id, email, name, uni, created_at)
+* contacts (id, user_id, raw_text, name, company, title, industry, seniority, location, enriched boolean, created_at)
+* enriched_contacts (id, contact_id, enriched_json, confidence, enriched_at)
+* connectors (id, user_id, contact_company_normalized, count_success, response_rate)
+* intro_requests (id, requester_id, connector_user_id, target_company_normalized, status [pending/accepted/declined/completed], created_at, updated_at, note, messages JSON)
+* metrics (basic counters)
+* rate_limits (user_id, week_start, indirect_requests_count)
+
+Provide SQL migration file(s).
+
+---
+
+## API Specs (detailed)
+
+Example:
+**POST /api/contacts/upload**
+
+* Auth required
+* Body: multipart/form-data CSV file
+* Returns: list of parsed rows (raw_text) & ids
+
+**POST /api/contacts/enrich**
+
+* Triggers LLM enrichment for each contact_id (batch)
+* Returns enriched JSON saved to DB
+
+**GET /api/search?q=fintech&role=intern&location=paris**
+
+* Returns:
+
+  * direct: [{contact, confidence}]
+  * indirect: [{connector_user_id (anon until accept), connector_score, company, confidence}]
+  * meta: counts
+
+**POST /api/intro/request**
+
+* Body: { requester_id, connector_user_id, target_company, reason, optional_attachment_link }
+* Creates intro request; notifies connector (simulated in v0 via email or in-app notification)
+
+**POST /api/intro/respond**
+
+* Body: { intro_request_id, action: accept|decline, optional_message }
+* On accept: system provides connector with message to forward to their contact (generated by LLM). If connector forwards and marks completed, requester receives contact details (or connector forwards directly via their channel).
+
+Provide input/output JSON examples for each endpoint.
+
+---
+
+## LLM prompt templates (exact text — make copy/paste ready)
+
+**Contact enrichment** (one-shot JSON output)
+
+```
+You are a structured data extractor. Input: a single raw contact string or CSV row from a user (could be partial). Output: a single valid JSON object with fields: name, company, title, industry, seniority (e.g. intern/junior/mid/senior/manager), location (city/country if available), confidence (0.0-1.0). If not available, set field to null. Keep values concise.
+
+Example input: "Maya P., Adidas, Product Intern 2023"
+Example output:
+{"name":"Maya P.", "company":"Adidas", "title":"Product Intern", "industry":"Sports/Retail", "seniority":"intern", "location":null, "confidence":0.87}
+
+Now process this input: <<RAW_CONTACT>>
+```
+
+**Industry classification**
+
+```
+Given a company name, return a single industry tag (one of fintech, consulting, luxury, retail, software, ai-startup, edtech, healthtech, government, other). Output only the tag as plain text.
+Company: <<COMPANY_NAME>>
+```
+
+**Intro message generator — user->connector**
+
+```
+You are an expert assistant writing a polite short message. The requester wants a connector to introduce them to a contact at TARGET_COMPANY. Generate a 2-3 sentence message that the requester can send to the connector. Include a one-line explanation of why the requester is a fit and a clear ask for a short intro or referral. Keep it under 250 characters. Use this JSON template as output: {"subject":"...", "body":"..."}.
+
+Requester name: <<REQUESTER_NAME>>
+Requester uni/role: <<REQUESTER_UNI_AND_ROLE>>
+Connector name (first): <<CONNECTOR_FIRST_NAME>>
+Target company: <<TARGET_COMPANY>>
+Reason/goal: <<SHORT_REASON>>
+```
+
+**Intro message generator — connector->target (on accept)**
+
+```
+You are crafting a short, warm forwardable message for a connector to send to their contact at TARGET_COMPANY. Keep it professional and to the point (max 3 sentences). Include: who you are introducing, one reason they're a good fit, and a soft ask for a 10-15 minute chat or referral. Output JSON: {"subject":"...","body":"..."}.
+Connector name: <<CONNECTOR_NAME>>
+Requester name: <<REQUESTER_NAME>>
+Requester short pitch: <<REQUESTER_PITCH>>
+Target contact context: <<TARGET_COMPANY_AND_ROLE_IF_KNOWN>>
+```
+
+**Privacy-safe indirect result explanation**
+
+```
+When showing an indirect match to a requester, present the following text:
+"We've found a possible intro path to TARGET_COMPANY via a verified Confluence member. To protect privacy, we will only reveal the connector's contact if they accept your request."
+```
+
+---
+
+## Frontend details & UI copy
+
+* Onboard screen: “Upload your 20–50 useful contacts (LinkedIn CSV recommended)”
+* Dashboard search placeholder: “Search by company, industry, or role — e.g., ‘fintech intern Paris’”
+* Result card fields: Company, Match type (Direct / Indirect), Confidence %, Connector score (if indirect), Button: Request intro / Generate message
+* Request modal: reason, optional CV link, quick message edit, Send Request
+* Connector modal: Accept / Decline / Edit message to forward / Mark completed
+* Intros page: list with status badges (Pending / Accepted / Declined / Completed)
+
+---
+
+## Minimal tests (what to include)
+
+* Unit test: CSV parsing → raw_text rows
+* Unit test: enrichment prompt → expected JSON keys & types (use mocked LLM)
+* Integration test: upload CSV → enrich → search returns direct match
+* E2E simulation: user A uploads contact at CompanyX; user B searches CompanyX → sees indirect match → requests intro → user A accepts → final state Completed
+
+---
+
+## Rate limits, anti-abuse & trust rules
+
+* Require users to add at least **5 contacts** before they can request >3 indirect intros/week
+* Record intro_accept_rate and intro_success_count per connector
+* Deny or throttle requests from users hitting abuse thresholds
+
+---
+
+## Project structure (example)
+
+```
+confluence/
+├─ README.md
+├─ .env.example
+├─ package.json
+├─ next.config.js
+├─ /app
+│  ├─ page.tsx  (landing)
+│  ├─ /dashboard
+│  ├─ /search
+│  ├─ /intros
+│  └─ /onboard
+├─ /components
+│  ├─ SearchBar.tsx
+│  ├─ ResultCard.tsx
+│  ├─ RequestModal.tsx
+│  └─ ConnectorModal.tsx
+├─ /lib
+│  ├─ db.ts (supabase client)
+│  ├─ llm.ts (abstract LLM client wrapper)
+│  └─ enrich.ts (calls LLM)
+├─ /api
+│  ├─ contacts/upload.ts
+│  ├─ contacts/enrich.ts
+│  ├─ search.ts
+│  ├─ intro/request.ts
+│  └─ intro/respond.ts
+├─ /migrations
+│  └─ init.sql
+└─ /tests
+   └─ ...
+```
+
+---
+
+## README (dev quick start)
+
+Include:
+
+* env vars (SUPABASE_URL, SUPABASE_KEY, LLM_API_KEY, NEXT_PUBLIC_SUPABASE_ANON_KEY, etc.)
+* How to run locally (npm install, supabase start / use free hosted, npm run dev)
+* How to run tests
+* How to deploy to Vercel & connect to Supabase
+
+---
+
+## Final notes for Windsurf output
+
+* Produce working code stubs for each API and front-end page with comments telling the developer where to add provider keys.
+* Use the LLM wrapper pattern so the developer can swap DeepSeek/Windsurf/OpenAI with an env flag.
+* Favor clarity and runnability over perfect optimization.
+* Include sample CSV fixtures and example Enriched JSON outputs.
+* Provide a short deployment checklist.
+
+---
+
+After Windsurf generates the app code, I will:
+
+* review the structure, and
+* ask for specific refinements (UI polish, rate-limit tuning, improved prompts, or LinkedIn OAuth later).
+
+Now generate the full project as specified. Output code files and README in a downloadable format or as a structured file tree with file contents inline.
