@@ -505,6 +505,7 @@ export default function Dashboard() {
               </Card>
             )}
             </motion.div>
+            </motion.div>
           </div>
         )}
       </main>
