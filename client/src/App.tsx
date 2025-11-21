@@ -10,6 +10,7 @@ import Signup from "@/pages/signup";
 import Login from "@/pages/login";
 import Onboard from "@/pages/onboard";
 import Dashboard from "@/pages/dashboard";
+import NetworkVisualization from "@/pages/network";
 import RequestIntro from "@/pages/request-intro";
 import Intros from "@/pages/intros";
 import Admin from "@/pages/admin";
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/login">{() => <PublicRoute component={Login} />}</Route>
       <Route path="/onboard">{() => <ProtectedRoute component={Onboard} />}</Route>
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
+      <Route path="/network">{() => <ProtectedRoute component={NetworkVisualization} />}</Route>
       <Route path="/request-intro">{() => <ProtectedRoute component={RequestIntro} />}</Route>
       <Route path="/intros">{() => <ProtectedRoute component={Intros} />}</Route>
       <Route path="/admin">{() => <ProtectedRoute component={Admin} />}</Route>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Network, LogOut, ArrowLeft, BarChart3 } from "lucide-react";
+import { Network, LogOut, ArrowLeft, BarChart3, Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { Contact } from "@shared/schema";
 
@@ -26,6 +26,7 @@ export default function NetworkVisualization() {
     },
     enabled: !!user,
     staleTime: 0,
+    gcTime: 0,
   });
 
   const handleLogout = () => {
@@ -36,19 +37,54 @@ export default function NetworkVisualization() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="space-y-4 p-4">
-          <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </div>
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="mx-auto w-full max-w-7xl flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </header>
+        <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-12">
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        </main>
       </div>
     );
   }
 
   const contacts: Contact[] = contactsData?.contacts || [];
+  if (contacts.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+          <div className="mx-auto w-full max-w-7xl flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" data-testid="button-back-dashboard">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            </Link>
+            <ThemeToggle />
+          </div>
+        </header>
+        <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-12 text-center">
+          <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-bold mb-2">No contacts yet</h2>
+          <p className="text-muted-foreground mb-6">Import your LinkedIn network to visualize your connections</p>
+          <Link href="/onboard">
+            <Button>Import Network</Button>
+          </Link>
+        </main>
+      </div>
+    );
+  }
   
-  // Prepare data for visualizations
-  const companyData = contacts.reduce((acc: Record<string, number>, contact) => {
+  // Prepare data for visualizations (only from enriched contacts)
+  const enrichedContacts = contacts.filter((c) => c.enriched);
+  
+  const companyData = enrichedContacts.reduce((acc: Record<string, number>, contact) => {
     if (contact.company) {
       acc[contact.company] = (acc[contact.company] || 0) + 1;
     }
@@ -56,11 +92,11 @@ export default function NetworkVisualization() {
   }, {});
 
   const companyChartData = Object.entries(companyData)
-    .map(([company, count]) => ({ name: company, count }))
+    .map(([company, count]) => ({ name: company.substring(0, 20), count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
-  const industryData = contacts.reduce((acc: Record<string, number>, contact) => {
+  const industryData = enrichedContacts.reduce((acc: Record<string, number>, contact) => {
     if (contact.industry) {
       acc[contact.industry] = (acc[contact.industry] || 0) + 1;
     }
@@ -71,7 +107,7 @@ export default function NetworkVisualization() {
     .map(([industry, count]) => ({ name: industry, value: count }))
     .sort((a, b) => b.value - a.value);
 
-  const seniorityData = contacts.reduce((acc: Record<string, number>, contact) => {
+  const seniorityData = enrichedContacts.reduce((acc: Record<string, number>, contact) => {
     if (contact.seniority) {
       acc[contact.seniority] = (acc[contact.seniority] || 0) + 1;
     }
@@ -82,8 +118,7 @@ export default function NetworkVisualization() {
     .map(([seniority, count]) => ({ name: seniority, count }))
     .sort((a, b) => b.count - a.count);
 
-  const enrichedCount = contacts.filter((c) => c.enriched).length;
-  const enrichmentRate = contacts.length > 0 ? Math.round((enrichedCount / contacts.length) * 100) : 0;
+  const enrichmentRate = contacts.length > 0 ? Math.round((enrichedContacts.length / contacts.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,19 +158,18 @@ export default function NetworkVisualization() {
           {/* Stats Cards */}
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              { label: "Total Contacts", value: contacts.length, icon: "👥" },
-              { label: "Enriched", value: `${enrichedCount}/${contacts.length}`, icon: "✨" },
-              { label: "Industries", value: Object.keys(industryData).length, icon: "🎯" },
-              { label: "Companies", value: Object.keys(companyData).length, icon: "🏢" },
+              { label: "Total Contacts", value: contacts.length },
+              { label: "Enriched", value: `${enrichedContacts.length}` },
+              { label: "Industries", value: Object.keys(industryData).length },
+              { label: "Companies", value: Object.keys(companyData).length },
             ].map((stat, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.1 }}>
                 <Card className="hover-elevate">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
-                    <span className="text-2xl">{stat.icon}</span>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <div className="text-3xl font-bold">{stat.value}</div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -220,18 +254,18 @@ export default function NetworkVisualization() {
             <Card className="hover-elevate">
               <CardHeader>
                 <CardTitle>Enrichment Status</CardTitle>
-                <CardDescription>AI enrichment progress of your network</CardDescription>
+                <CardDescription>AI analysis of your contacts</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{enrichmentRate}% Enriched</span>
-                  <span className="text-xs text-muted-foreground">{enrichedCount} of {contacts.length}</span>
+                  <span className="text-sm font-medium">{enrichmentRate}% Complete</span>
+                  <span className="text-xs text-muted-foreground">{enrichedContacts.length} of {contacts.length}</span>
                 </div>
-                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <motion.div className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full" initial={{ width: 0 }} animate={{ width: `${enrichmentRate}%` }} transition={{ duration: 1, ease: "easeOut" }} />
+                <div className="w-full bg-muted rounded-lg overflow-hidden h-3">
+                  <motion.div className="h-full bg-gradient-to-r from-primary to-primary/60" initial={{ width: 0 }} animate={{ width: `${enrichmentRate}%` }} transition={{ duration: 1.5, ease: "easeOut" }} />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {enrichmentRate === 100 ? "All contacts enriched! Your network is fully analyzed." : enrichmentRate > 0 ? "Keep adding and enriching contacts to unlock more opportunities." : "Enrich your contacts to see detailed insights."}
+                  {enrichmentRate === 100 ? "All set! Your network is fully analyzed and ready to search." : enrichmentRate >= 50 ? "Great progress! Most contacts are enriched." : "Enrich more contacts to improve search results."}
                 </p>
               </CardContent>
             </Card>

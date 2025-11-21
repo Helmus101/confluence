@@ -239,64 +239,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Find indirect matches from ALL other users' networks
       const allOtherContacts = await storage.getAllEnrichedContacts(userId);
-      const indirectMatches: SearchResult["indirect"] = [];
-      const seenCompaniesMap = new Map<string, Array<typeof allOtherContacts[0]>>();
-
-      for (const contact of allOtherContacts) {
-        if (!contact.company) continue;
+      
+      // Apply same filtering as direct matches
+      const matchingIndirectContacts = allOtherContacts.filter((contact) => {
+        if (!contact.enriched) return false;
         
-        const normalized = normalizeCompanyName(contact.company);
+        let matches = false;
         
-        // Check if company matches search intent
-        const companyMatches = !searchIntent.company || contact.company.toLowerCase().includes(searchIntent.company.toLowerCase());
-        const industryMatches = !searchIntent.industry || contact.industry?.toLowerCase().includes(searchIntent.industry.toLowerCase());
-        const roleMatches = !searchIntent.role || contact.title?.toLowerCase().includes(searchIntent.role.toLowerCase());
-        const seniorityMatches = !searchIntent.seniority || contact.seniority?.toLowerCase().includes(searchIntent.seniority.toLowerCase());
-        const locationMatches = !searchIntent.location || contact.location?.toLowerCase().includes(searchIntent.location.toLowerCase());
-        
-        if (!(companyMatches || industryMatches || roleMatches || seniorityMatches || locationMatches)) continue;
-        
-        if (!seenCompaniesMap.has(normalized)) {
-          seenCompaniesMap.set(normalized, []);
+        if (searchIntent.company && contact.company?.toLowerCase().includes(searchIntent.company.toLowerCase())) {
+          matches = true;
         }
-        seenCompaniesMap.get(normalized)!.push(contact);
-      }
+        if (searchIntent.industry && contact.industry?.toLowerCase().includes(searchIntent.industry.toLowerCase())) {
+          matches = true;
+        }
+        if (searchIntent.role && contact.title?.toLowerCase().includes(searchIntent.role.toLowerCase())) {
+          matches = true;
+        }
+        if (searchIntent.seniority && contact.seniority?.toLowerCase().includes(searchIntent.seniority.toLowerCase())) {
+          matches = true;
+        }
+        if (searchIntent.location && contact.location?.toLowerCase().includes(searchIntent.location.toLowerCase())) {
+          matches = true;
+        }
+        
+        return matches;
+      });
 
-      // Collect all individual contacts for curation
+      // Enrich with connector info
       const allIndirectContacts: Array<typeof allOtherContacts[0] & { connectorName: string; connectorId: string; connectorStats: { successCount: number; responseRate: number }; matchType: "indirect" }> = [];
       
-      const seenCompaniesEntries = Array.from(seenCompaniesMap.entries());
-      for (const entry of seenCompaniesEntries) {
-        const normalized = entry[0];
-        const contacts = entry[1];
-        
-        for (const contact of contacts) {
-          const connectorId = contact.userId;
-          const connector = await storage.getUser(connectorId);
-          if (!connector) continue;
+      for (const contact of matchingIndirectContacts) {
+        const connectorId = contact.userId;
+        const connector = await storage.getUser(connectorId);
+        if (!connector) continue;
 
-          const stats = await storage.getConnectorStats(connectorId);
-          
-          allIndirectContacts.push({
-            ...contact,
-            connectorName: connector.name.split(" ")[0],
-            connectorId,
-            connectorStats: {
-              successCount: stats?.successCount || 0,
-              responseRate: stats?.responseRate || 0,
-            },
-            matchType: "indirect",
-          });
-        }
+        const stats = await storage.getConnectorStats(connectorId);
+        
+        allIndirectContacts.push({
+          ...contact,
+          connectorName: connector.name.split(" ")[0],
+          connectorId,
+          connectorStats: {
+            successCount: stats?.successCount || 0,
+            responseRate: stats?.responseRate || 0,
+          },
+          matchType: "indirect",
+        });
       }
 
-      // Sort by confidence and connector stats, then take top 20
+      // Sort by confidence, connector stats, and enrichment quality, then take top 20
       const curatedIndirect = allIndirectContacts
         .sort((a, b) => {
           const confDiff = (b.confidence || 0) - (a.confidence || 0);
           if (confDiff !== 0) return confDiff;
           const statsDiff = (b.connectorStats.successCount + b.connectorStats.responseRate) - (a.connectorStats.successCount + a.connectorStats.responseRate);
-          return statsDiff;
+          if (statsDiff !== 0) return statsDiff;
+          return (b.linkedinSummary?.length || 0) - (a.linkedinSummary?.length || 0);
         })
         .slice(0, 20)
         .map((c) => ({ ...c, matchType: "indirect" as const }));
