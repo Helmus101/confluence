@@ -263,6 +263,7 @@ export default function Onboard() {
                                 placeholder="https://linkedin.com/in/johndoe"
                                 data-testid="input-contact-linkedin"
                                 {...field}
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
