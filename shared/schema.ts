@@ -16,13 +16,31 @@ export const contacts = pgTable("contacts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   rawText: text("raw_text").notNull(),
+  // Basic info
   name: text("name"),
+  email: text("email"),
+  phone: text("phone"),
+  linkedinUrl: text("linkedin_url"),
+  // Professional info
   company: text("company"),
   title: text("title"),
   industry: text("industry"),
   seniority: text("seniority"),
   location: text("location"),
-  linkedinUrl: text("linkedin_url"),
+  // Detailed enrichment
+  companySize: text("company_size"),
+  fundingStage: text("funding_stage"),
+  yearsExperience: integer("years_experience"),
+  skills: text("skills").array(),
+  education: text("education"),
+  university: text("university"),
+  degree: text("degree"),
+  major: text("major"),
+  graduationYear: integer("graduation_year"),
+  // Interest & relevance
+  recentRoleChange: boolean("recent_role_change"),
+  industryFit: text("industry_fit"),
+  // Metadata
   enriched: boolean("enriched").default(false).notNull(),
   confidence: integer("confidence"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -96,11 +114,24 @@ export type RateLimit = typeof rateLimits.$inferSelect;
 
 export interface EnrichedData {
   name: string | null;
+  email: string | null;
+  phone: string | null;
   company: string | null;
   title: string | null;
   industry: string | null;
   seniority: string | null;
   location: string | null;
+  companySize: string | null;
+  fundingStage: string | null;
+  yearsExperience: number | null;
+  skills: string[] | null;
+  education: string | null;
+  university: string | null;
+  degree: string | null;
+  major: string | null;
+  graduationYear: number | null;
+  recentRoleChange: boolean | null;
+  industryFit: string | null;
   confidence: number;
 }
 
