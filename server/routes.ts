@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find indirect matches from ALL other users' networks
       const allOtherContacts = await storage.getAllEnrichedContacts(userId);
       const indirectMatches: SearchResult["indirect"] = [];
-      const seenCompanies = new Map<string, Array<typeof allOtherContacts[0]>>();
+      const seenCompaniesMap = new Map<string, Array<typeof allOtherContacts[0]>>();
 
       for (const contact of allOtherContacts) {
         if (!contact.company) continue;
@@ -256,13 +256,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (!(companyMatches || industryMatches || roleMatches || seniorityMatches || locationMatches)) continue;
         
-        if (!seenCompanies.has(normalized)) {
-          seenCompanies.set(normalized, []);
+        if (!seenCompaniesMap.has(normalized)) {
+          seenCompaniesMap.set(normalized, []);
         }
-        seenCompanies.get(normalized)!.push(contact);
+        seenCompaniesMap.get(normalized)!.push(contact);
       }
 
-      for (const [normalized, contacts] of seenCompanies.entries()) {
+      const seenCompaniesEntries = Array.from(seenCompaniesMap.entries());
+      for (const entry of seenCompaniesEntries) {
+        const normalized = entry[0];
+        const contacts = entry[1];
         const contact = contacts[0];
         const connectorId = contact.userId;
         const connector = await storage.getUser(connectorId);

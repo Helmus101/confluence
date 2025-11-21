@@ -24,6 +24,7 @@ export default function Signup() {
       email: "",
       password: "",
       name: "",
+      linkedinUrl: "",
       university: "",
     },
   });
@@ -113,12 +114,25 @@ export default function Signup() {
                 />
                 <FormField
                   control={form.control}
+                  name="linkedinUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>LinkedIn Profile URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://linkedin.com/in/yourprofile" data-testid="input-linkedin" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="university"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>University (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Stanford University" data-testid="input-university" {...field} />
+                        <Input placeholder="Stanford University" data-testid="input-university" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
