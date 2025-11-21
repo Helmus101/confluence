@@ -8,8 +8,12 @@ import type {
   ConnectorStats,
   RateLimit,
 } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { users, contacts, introRequests, connectorStats, rateLimits } from "@shared/schema";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { eq, and, ne, desc } from "drizzle-orm";
 import { normalizeCompanyName, getStartOfWeek } from "./lib/utils";
+import pkg from "pg";
+const { Pool } = pkg;
 
 export interface IStorage {
   // Users
@@ -41,186 +45,184 @@ export interface IStorage {
   createOrUpdateRateLimit(userId: string, weekStart: Date): Promise<RateLimit>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User> = new Map();
-  private contacts: Map<string, Contact> = new Map();
-  private introRequests: Map<string, IntroRequest> = new Map();
-  private connectorStats: Map<string, ConnectorStats> = new Map();
-  private rateLimits: Map<string, RateLimit> = new Map();
+export class DrizzleStorage implements IStorage {
+  private db: ReturnType<typeof drizzle>;
+
+  constructor() {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is not set");
+    }
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    this.db = drizzle(pool);
+  }
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find((user) => user.email === email);
+    const result = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = {
-      ...insertUser,
-      id,
-      university: insertUser.university || null,
-      createdAt: new Date(),
-    };
-    this.users.set(id, user);
-    return user;
+    const result = await this.db.insert(users).values(insertUser).returning();
+    return result[0];
   }
 
   async getContact(id: string): Promise<Contact | undefined> {
-    return this.contacts.get(id);
+    const result = await this.db.select().from(contacts).where(eq(contacts.id, id)).limit(1);
+    return result[0];
   }
 
   async getUserContacts(userId: string): Promise<Contact[]> {
-    return Array.from(this.contacts.values()).filter((contact) => contact.userId === userId);
+    return await this.db.select().from(contacts).where(eq(contacts.userId, userId));
   }
 
   async createContact(userId: string, contact: Partial<InsertContact>): Promise<Contact> {
-    const id = randomUUID();
-    const newContact: Contact = {
-      id,
-      userId,
-      rawText: contact.rawText || "",
-      name: contact.name || null,
-      email: null,
-      phone: null,
-      company: contact.company || null,
-      title: contact.title || null,
-      industry: null,
-      seniority: null,
-      location: null,
-      linkedinUrl: contact.linkedinUrl || null,
-      companySize: null,
-      fundingStage: null,
-      yearsExperience: null,
-      skills: null,
-      education: null,
-      university: null,
-      degree: null,
-      major: null,
-      graduationYear: null,
-      recentRoleChange: null,
-      industryFit: null,
-      enriched: false,
-      confidence: null,
-      createdAt: new Date(),
-    };
-    this.contacts.set(id, newContact);
-    return newContact;
+    const result = await this.db
+      .insert(contacts)
+      .values({
+        userId,
+        rawText: contact.rawText || "",
+        name: contact.name || null,
+        company: contact.company || null,
+        title: contact.title || null,
+        linkedinUrl: contact.linkedinUrl || null,
+      })
+      .returning();
+    return result[0];
   }
 
   async updateContact(id: string, updates: Partial<Contact>): Promise<Contact | undefined> {
-    const contact = this.contacts.get(id);
-    if (!contact) return undefined;
-    
-    const updated = { ...contact, ...updates };
-    this.contacts.set(id, updated);
-    return updated;
+    const result = await this.db.update(contacts).set(updates).where(eq(contacts.id, id)).returning();
+    return result[0];
   }
 
   async getContactsByCompany(companyNormalized: string, excludeUserId?: string): Promise<Contact[]> {
-    return Array.from(this.contacts.values()).filter((contact) => {
-      if (!contact.company) return false;
-      if (excludeUserId && contact.userId === excludeUserId) return false;
-      return normalizeCompanyName(contact.company) === companyNormalized;
-    });
+    const filters = [eq(contacts.enriched, true)];
+    
+    if (excludeUserId) {
+      filters.push(ne(contacts.userId, excludeUserId));
+    }
+    
+    // Search for company that matches when normalized
+    const allContacts = await this.db.select().from(contacts).where(and(...filters));
+    return allContacts.filter((c) => c.company && normalizeCompanyName(c.company) === companyNormalized);
   }
 
   async getAllEnrichedContacts(excludeUserId?: string): Promise<Contact[]> {
-    return Array.from(this.contacts.values()).filter((contact) => {
-      if (!contact.enriched) return false;
-      if (excludeUserId && contact.userId === excludeUserId) return false;
-      return true;
-    });
+    const filters = [eq(contacts.enriched, true)];
+    
+    if (excludeUserId) {
+      filters.push(ne(contacts.userId, excludeUserId));
+    }
+    
+    return await this.db.select().from(contacts).where(and(...filters));
   }
 
   async getIntroRequest(id: string): Promise<IntroRequest | undefined> {
-    return this.introRequests.get(id);
+    const result = await this.db.select().from(introRequests).where(eq(introRequests.id, id)).limit(1);
+    return result[0];
   }
 
   async getUserSentRequests(userId: string): Promise<IntroRequest[]> {
-    return Array.from(this.introRequests.values())
-      .filter((req) => req.requesterId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await this.db
+      .select()
+      .from(introRequests)
+      .where(eq(introRequests.requesterId, userId))
+      .orderBy(desc(introRequests.createdAt));
   }
 
   async getUserReceivedRequests(userId: string): Promise<IntroRequest[]> {
-    return Array.from(this.introRequests.values())
-      .filter((req) => req.connectorUserId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await this.db
+      .select()
+      .from(introRequests)
+      .where(eq(introRequests.connectorUserId, userId))
+      .orderBy(desc(introRequests.createdAt));
   }
 
   async createIntroRequest(request: Omit<IntroRequest, "id" | "createdAt" | "updatedAt">): Promise<IntroRequest> {
-    const id = randomUUID();
-    const newRequest: IntroRequest = {
-      ...request,
-      id,
-      contactId: request.contactId || null,
-      messages: request.messages || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.introRequests.set(id, newRequest);
-    return newRequest;
+    const result = await this.db.insert(introRequests).values(request).returning();
+    return result[0];
   }
 
   async updateIntroRequest(id: string, updates: Partial<IntroRequest>): Promise<IntroRequest | undefined> {
-    const request = this.introRequests.get(id);
-    if (!request) return undefined;
-    
-    const updated = { ...request, ...updates, updatedAt: new Date() };
-    this.introRequests.set(id, updated);
-    return updated;
+    const result = await this.db
+      .update(introRequests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(introRequests.id, id))
+      .returning();
+    return result[0];
   }
 
   async getConnectorStats(userId: string): Promise<ConnectorStats | undefined> {
-    return this.connectorStats.get(userId);
+    const result = await this.db.select().from(connectorStats).where(eq(connectorStats.userId, userId)).limit(1);
+    return result[0];
   }
 
   async updateConnectorStats(userId: string, updates: Partial<ConnectorStats>): Promise<ConnectorStats> {
-    let stats = this.connectorStats.get(userId);
+    let stats = await this.getConnectorStats(userId);
+    
     if (!stats) {
-      stats = {
-        id: randomUUID(),
-        userId,
-        successCount: 0,
-        totalRequests: 0,
-        responseRate: 0,
-      };
+      // Create new stats
+      const result = await this.db
+        .insert(connectorStats)
+        .values({
+          userId,
+          successCount: updates.successCount || 0,
+          totalRequests: updates.totalRequests || 0,
+          responseRate: 0,
+        })
+        .returning();
+      stats = result[0];
+    } else {
+      // Update existing stats
+      const updated = { ...stats, ...updates };
+      if (updated.totalRequests > 0) {
+        updated.responseRate = Math.round((updated.successCount / updated.totalRequests) * 100);
+      }
+      const result = await this.db.update(connectorStats).set(updated).where(eq(connectorStats.userId, userId)).returning();
+      stats = result[0];
     }
     
-    const updated = { ...stats, ...updates };
-    if (updated.totalRequests > 0) {
-      updated.responseRate = Math.round((updated.successCount / updated.totalRequests) * 100);
-    }
-    this.connectorStats.set(userId, updated);
-    return updated;
+    return stats;
   }
 
   async getRateLimit(userId: string, weekStart: Date): Promise<RateLimit | undefined> {
-    return Array.from(this.rateLimits.values()).find(
-      (limit) =>
-        limit.userId === userId &&
-        limit.weekStart.getTime() === weekStart.getTime()
-    );
+    const result = await this.db
+      .select()
+      .from(rateLimits)
+      .where(and(eq(rateLimits.userId, userId), eq(rateLimits.weekStart, weekStart)))
+      .limit(1);
+    return result[0];
   }
 
   async createOrUpdateRateLimit(userId: string, weekStart: Date): Promise<RateLimit> {
     let limit = await this.getRateLimit(userId, weekStart);
+    
     if (!limit) {
-      limit = {
-        id: randomUUID(),
-        userId,
-        weekStart,
-        indirectRequestsCount: 1,
-      };
+      const result = await this.db
+        .insert(rateLimits)
+        .values({
+          userId,
+          weekStart,
+          indirectRequestsCount: 1,
+        })
+        .returning();
+      limit = result[0];
     } else {
-      limit.indirectRequestsCount += 1;
+      const result = await this.db
+        .update(rateLimits)
+        .set({ indirectRequestsCount: limit.indirectRequestsCount + 1 })
+        .where(and(eq(rateLimits.userId, userId), eq(rateLimits.weekStart, weekStart)))
+        .returning();
+      limit = result[0];
     }
-    this.rateLimits.set(limit.id, limit);
+    
     return limit;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DrizzleStorage();
