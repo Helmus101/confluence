@@ -471,7 +471,7 @@ export default function Dashboard() {
                         <CardHeader>
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex items-start gap-3 flex-1 cursor-pointer" onClick={() => {
-                              setSelectedContact({ ...contact, matchType: "indirect" });
+                              setSelectedContact({ ...contact, matchType: "indirect", connectorId: (contact as any).connectorId });
                               setIsModalOpen(true);
                             }}>
                               <Avatar>

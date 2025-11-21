@@ -8,13 +8,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { queryClient } from "@/lib/queryClient";
+import { t } from "@/lib/translation";
 import type { IntroRequest } from "@shared/schema";
-import { ArrowLeft, CheckCircle2, XCircle, Clock, Mail } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Clock, Mail, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
 
 export default function Intros() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [statusUpdates, setStatusUpdates] = useState<Record<string, string>>({});
+  const [requesterInfo, setRequesterInfo] = useState<Record<string, any>>({});
 
   const { data: sentRequests, isLoading: loadingSent } = useQuery<IntroRequest[]>({
     queryKey: ["/api/intro/sent", user?.id],
@@ -236,6 +240,12 @@ export default function Intros() {
                         <p className="mb-1 text-sm font-medium">Their message:</p>
                         <p className="text-sm text-muted-foreground">{request.reason}</p>
                       </div>
+                      {(request as any).userEssay && (
+                        <div>
+                          <p className="mb-1 text-sm font-medium">About the requester:</p>
+                          <p className="text-sm text-muted-foreground">{(request as any).userEssay}</p>
+                        </div>
+                      )}
                       {request.status === "pending" && (
                         <div className="flex gap-2">
                           <Button
@@ -266,8 +276,33 @@ export default function Intros() {
                               You've accepted this request. Make the intro when ready!
                             </p>
                           </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <Button
+                              variant={statusUpdates[request.id] === "awaiting" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setStatusUpdates({ ...statusUpdates, [request.id]: "awaiting" })}
+                              data-testid={`button-status-awaiting-${request.id}`}
+                            >
+                              Awaiting
+                            </Button>
+                            <Button
+                              variant={statusUpdates[request.id] === "progress" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setStatusUpdates({ ...statusUpdates, [request.id]: "progress" })}
+                              data-testid={`button-status-progress-${request.id}`}
+                            >
+                              Progress
+                            </Button>
+                            <Button
+                              variant={statusUpdates[request.id] === "done" ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setStatusUpdates({ ...statusUpdates, [request.id]: "done" })}
+                              data-testid={`button-status-done-${request.id}`}
+                            >
+                              Done
+                            </Button>
+                          </div>
                           <Button
-                            variant="outline"
                             onClick={() => completeMutation.mutate(request.id)}
                             disabled={completeMutation.isPending}
                             className="w-full"

@@ -344,7 +344,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetCompany: data.targetCompany,
         targetCompanyNormalized: normalized,
         reason: data.reason,
+        userEssay: data.userEssay || null,
         status: "pending",
+        statusUpdates: null,
         messages: null,
       });
 

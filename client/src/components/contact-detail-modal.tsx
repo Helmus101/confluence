@@ -4,18 +4,70 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Copy, Check } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ExternalLink, Copy, Check, Send } from "lucide-react";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+import { t } from "@/lib/translation";
 import type { Contact } from "@shared/schema";
 
 interface ContactDetailModalProps {
-  contact: (Contact & { connectorName?: string; matchType?: string }) | null;
+  contact: (Contact & { connectorName?: string; matchType?: string; connectorId?: string }) | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailModalProps) {
   const [copied, setCopied] = useState(false);
+  const [showIntroForm, setShowIntroForm] = useState(false);
+  const [message, setMessage] = useState("");
+  const [essay, setEssay] = useState("");
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const requestMutation = useMutation({
+    mutationFn: async () => {
+      if (!contact || !user || !contact.connectorId) throw new Error("Missing required data");
+      const wordCount = essay.trim().split(/\s+/).length;
+      if (wordCount < 100) throw new Error(t("minimum-words"));
+
+      const response = await fetch("/api/intro/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          connectorUserId: contact.connectorId,
+          contactId: contact.id,
+          targetCompany: contact.company || "Unknown",
+          reason: message,
+          userEssay: essay,
+        }),
+      });
+      if (!response.ok) throw new Error("Request failed");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/intro/sent"] });
+      toast({
+        title: "Success",
+        description: "Introduction request sent!",
+      });
+      setShowIntroForm(false);
+      setMessage("");
+      setEssay("");
+      onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send request",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (!contact) return null;
 
@@ -35,6 +87,19 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
       .toUpperCase()
       .slice(0, 2);
   };
+
+  const initializeIntroForm = () => {
+    if (contact?.connectorName && contact?.name) {
+      const prefilledMessage = t("prefilled-message", {
+        name: contact.name,
+        connector: contact.connectorName,
+      });
+      setMessage(prefilledMessage);
+      setShowIntroForm(true);
+    }
+  };
+
+  const wordCount = essay.trim().split(/\s+/).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -168,29 +233,93 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
             </>
           )}
 
-          {contact.matchType === "indirect" && contact.connectorName && (
+          {contact.matchType === "indirect" && contact.connectorName && !showIntroForm && (
             <>
               <Separator />
               <div className="rounded-lg bg-blue-500/10 p-3">
                 <p className="text-sm text-blue-700 dark:text-blue-400">
-                  Available via <span className="font-semibold">{contact.connectorName}</span> in your network
+                  {t("via")} <span className="font-semibold">{contact.connectorName}</span> in your network
                 </p>
+              </div>
+            </>
+          )}
+
+          {showIntroForm && contact.matchType === "indirect" && (
+            <>
+              <Separator className="my-4" />
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">{t("edit-message")}</label>
+                  <Textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="min-h-20"
+                    data-testid="textarea-message"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium">{t("essay-label")}</label>
+                  <Textarea
+                    value={essay}
+                    onChange={(e) => setEssay(e.target.value)}
+                    placeholder={t("essay-placeholder")}
+                    className="min-h-32"
+                    data-testid="textarea-essay"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("word-count", { count: wordCount.toString() })}
+                    {wordCount < 100 && <span className="text-destructive"> - {t("minimum-words")}</span>}
+                  </p>
+                </div>
               </div>
             </>
           )}
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose} className="flex-1" data-testid="button-close-modal">
-            Close
-          </Button>
-          {contact.linkedinUrl && (
-            <Button asChild className="flex-1" data-testid="button-view-profile">
-              <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer">
-                View Profile
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
+          {showIntroForm ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowIntroForm(false)}
+                className="flex-1"
+                data-testid="button-cancel-intro"
+              >
+                {t("cancel")}
+              </Button>
+              <Button
+                onClick={() => requestMutation.mutate()}
+                disabled={requestMutation.isPending || wordCount < 100}
+                className="flex-1"
+                data-testid="button-send-intro"
+              >
+                <Send className="mr-2 h-4 w-4" />
+                {t("send-request")}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose} className="flex-1" data-testid="button-close-modal">
+                {t("close")}
+              </Button>
+              {contact.matchType === "indirect" && contact.connectorId && (
+                <Button
+                  onClick={initializeIntroForm}
+                  className="flex-1"
+                  data-testid="button-request-intro-modal"
+                >
+                  {t("ask-intro")}
+                </Button>
+              )}
+              {contact.linkedinUrl && (
+                <Button asChild className="flex-1" data-testid="button-view-profile">
+                  <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                    {t("view-profile")}
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+            </>
           )}
         </div>
       </DialogContent>
