@@ -362,6 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate suggested message
       const requester = await storage.getUser(userId);
       const connector = await storage.getUser(data.connectorUserId);
+      const contact = data.contactId ? await storage.getContact(data.contactId) : null;
       
       let suggestedMessage = null;
       if (requester && connector) {
@@ -373,6 +374,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           reason: data.reason,
         });
       }
+
+      // Create notification for connector
+      await storage.createNotification(data.connectorUserId, {
+        type: "intro_request",
+        title: "New Intro Request",
+        message: `${requester?.name || "Someone"} is requesting an intro to ${contact?.name || data.targetCompany}`,
+        relatedId: request.id,
+      });
 
       return res.json({ request, suggestedMessage });
     } catch (error: any) {
@@ -416,6 +425,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+
+      // Create notification for requester about response
+      const actionText = action === "accept" ? "accepted" : "declined";
+      const connector = await storage.getUser(userId);
+      await storage.createNotification(request.requesterId, {
+        type: "intro_response",
+        title: `Request ${actionText}!`,
+        message: `${connector?.name || "A connector"} has ${actionText} your intro request`,
+        relatedId: requestId,
+      });
 
       return res.json({ request: updated, message });
     } catch (error: any) {

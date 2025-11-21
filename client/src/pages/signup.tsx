@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import { apiRequest } from "@/lib/queryClient";
 import { insertUserSchema, type InsertUser, type User } from "@shared/schema";
 import { Network, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "@/lib/translation-context";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -78,6 +79,7 @@ const successVariants = {
 };
 
 export default function Signup() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();

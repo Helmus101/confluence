@@ -168,11 +168,16 @@ export default function Intros() {
                   <Card key={request.id} data-testid={`card-sent-${request.id}`}>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <CardTitle className="text-base">{request.targetCompany}</CardTitle>
+                        <div className="flex-1">
+                          <CardTitle className="text-base">Intro to {(request as any).contactName || request.targetCompany}</CardTitle>
                           <CardDescription>
                             Requested {format(new Date(request.createdAt), "MMM d, yyyy")}
                           </CardDescription>
+                          {(request as any).askerLinkedin && (
+                            <a href={(request as any).askerLinkedin} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline">
+                              LinkedIn Profile <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
                         </div>
                         {getStatusBadge(request.status)}
                       </div>
@@ -228,11 +233,21 @@ export default function Intros() {
                   <Card key={request.id} data-testid={`card-received-${request.id}`}>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <CardTitle className="text-base">Intro request to {request.targetCompany}</CardTitle>
+                        <div className="flex-1">
+                          <CardTitle className="text-base">Intro request to {(request as any).contactName || request.targetCompany}</CardTitle>
                           <CardDescription>
                             Received {format(new Date(request.createdAt), "MMM d, yyyy")}
                           </CardDescription>
+                          {(request as any).contactLinkedin && (
+                            <a href={(request as any).contactLinkedin} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline">
+                              Contact LinkedIn <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {(request as any).askerLinkedin && (
+                            <a href={(request as any).askerLinkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                              Requester LinkedIn <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
                         </div>
                         {getStatusBadge(request.status)}
                       </div>

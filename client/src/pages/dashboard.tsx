@@ -74,6 +74,10 @@ export default function Dashboard() {
 
   const [searchProgress, setSearchProgress] = useState(0);
 
+  useEffect(() => {
+    document.title = t("welcome-back");
+  }, [t]);
+
   const { data: searchResults, isLoading } = useQuery<SearchResult>({
     queryKey: ["/api/search", activeSearch, user?.id],
     queryFn: async () => {
