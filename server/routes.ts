@@ -55,6 +55,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
+      // Verify user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "User not found. Please log in again." });
+      }
+
       const csvText = req.file.buffer.toString("utf-8");
       const parsed = Papa.parse(csvText, { header: true });
 
@@ -116,6 +122,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
+      // Verify user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "User not found. Please log in again." });
+      }
+
       const data = insertContactSchema.parse(req.body);
       const contact = await storage.createContact(userId, data);
 
@@ -130,6 +142,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.body.userId || (req as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      // Verify user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "User not found. Please log in again." });
       }
 
       const contacts = await storage.getUserContacts(userId);
