@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ContactDetailModal } from "@/components/contact-detail-modal";
+import { NotificationCenter } from "@/components/notification-center";
 import { useToast } from "@/hooks/use-toast";
 import type { SearchResult, Contact } from "@shared/schema";
 import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap, Download } from "lucide-react";
@@ -192,6 +193,7 @@ export default function Dashboard() {
                 <Mail className="h-5 w-5" />
               </Button>
             </Link>
+            <NotificationCenter userId={user?.id} />
             <Button variant="ghost" size="icon" onClick={handleDownloadCode} title="Download project as ZIP" data-testid="button-download">
               <Download className="h-5 w-5" />
             </Button>

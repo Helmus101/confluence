@@ -85,6 +85,17 @@ export const rateLimits = pgTable("rate_limits", {
   indirectRequestsCount: integer("indirect_requests_count").default(0).notNull(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").default(false).notNull(),
+  relatedId: varchar("related_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
@@ -130,6 +141,7 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ConnectorStats = typeof connectorStats.$inferSelect;
 export type RateLimit = typeof rateLimits.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
 
 export interface EnrichedData {
   name: string | null;

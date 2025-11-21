@@ -9,8 +9,9 @@ import type {
   RateLimit,
   ChatMessage,
   InsertChatMessage,
+  Notification,
 } from "@shared/schema";
-import { users, contacts, introRequests, connectorStats, rateLimits, chatMessages } from "@shared/schema";
+import { users, contacts, introRequests, connectorStats, rateLimits, chatMessages, notifications } from "@shared/schema";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { normalizeCompanyName, getStartOfWeek } from "./lib/utils";
@@ -49,6 +50,13 @@ export interface IStorage {
   // Chat Messages
   getChatMessages(introRequestId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+
+  // Notifications
+  getUserNotifications(userId: string, limit?: number): Promise<Notification[]>;
+  getUnreadNotificationCount(userId: string): Promise<number>;
+  createNotification(userId: string, notification: Omit<Notification, "id" | "createdAt" | "userId">): Promise<Notification>;
+  markNotificationAsRead(id: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -241,6 +249,45 @@ export class DrizzleStorage implements IStorage {
   async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
     const result = await this.db.insert(chatMessages).values(message).returning();
     return result[0];
+  }
+
+  async getUserNotifications(userId: string, limit: number = 10): Promise<Notification[]> {
+    return await this.db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    const result = await this.db
+      .select({ count: desc(notifications.id) })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+    return result.length;
+  }
+
+  async createNotification(userId: string, notification: Omit<Notification, "id" | "createdAt" | "userId">): Promise<Notification> {
+    const result = await this.db
+      .insert(notifications)
+      .values({
+        userId,
+        ...notification,
+      })
+      .returning();
+    return result[0];
+  }
+
+  async markNotificationAsRead(id: string): Promise<void> {
+    await this.db.update(notifications).set({ read: true }).where(eq(notifications.id, id));
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await this.db
+      .update(notifications)
+      .set({ read: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
   }
 }
 
