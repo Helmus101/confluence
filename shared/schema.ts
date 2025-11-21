@@ -56,7 +56,9 @@ export const introRequests = pgTable("intro_requests", {
   targetCompany: text("target_company").notNull(),
   targetCompanyNormalized: text("target_company_normalized").notNull(),
   reason: text("reason").notNull(),
+  userEssay: text("user_essay"),
   status: text("status").notNull().default("pending"),
+  statusUpdates: jsonb("status_updates"),
   messages: jsonb("messages"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -121,7 +123,10 @@ export const insertIntroRequestSchema = createInsertSchema(introRequests).pick({
   connectorUserId: true,
   targetCompany: true,
   reason: true,
+  userEssay: true,
   contactId: true,
+}).extend({
+  userEssay: z.string().min(100, "Essay must be at least 100 words"),
 });
 
 export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({

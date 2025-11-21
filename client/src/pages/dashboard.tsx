@@ -111,35 +111,6 @@ export default function Dashboard() {
     setLocation("/");
   };
 
-  const [translatedContacts, setTranslatedContacts] = useState<Record<string, any>>({});
-
-  const handleTranslateToFrench = async (contact: any) => {
-    try {
-      const text = `${contact.name} - ${contact.title} at ${contact.company}. Industry: ${contact.industry}. Seniority: ${contact.seniority}. ${contact.linkedinSummary || ""}`;
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, targetLanguage: "French" }),
-      });
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
-      setTranslatedContacts({
-        ...translatedContacts,
-        [contact.id]: data.translated,
-      });
-      toast({
-        title: "Translated to French",
-        description: "Contact information translated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to translate",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleAskForIntro = (contact: any) => {
     setSelectedContact({ ...contact, matchType: "indirect" });
     setIsModalOpen(true);
@@ -202,6 +173,22 @@ export default function Dashboard() {
               </Button>
             </Link>
             <NotificationCenter userId={user?.id} />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                const lang = document.documentElement.lang === 'fr' ? 'en' : 'fr';
+                document.documentElement.lang = lang;
+                localStorage.setItem('language', lang);
+                toast({
+                  title: lang === 'fr' ? 'Français' : 'English',
+                  description: lang === 'fr' ? 'Interface switched to French' : 'Interface switched to English',
+                });
+              }}
+              data-testid="button-language-toggle"
+            >
+              {document.documentElement.lang === 'fr' ? '🇬🇧' : '🇫🇷'}
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
               <LogOut className="h-5 w-5" />
@@ -521,34 +508,16 @@ export default function Dashboard() {
                           <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 mb-4">
                             Via {contact.connectorName}
                           </Badge>
-                          {translatedContacts[contact.id] && (
-                            <div className="mb-4 p-2 bg-muted rounded text-sm">
-                              <p className="font-medium text-xs mb-1">French Translation:</p>
-                              <p className="text-xs">{translatedContacts[contact.id]}</p>
-                            </div>
-                          )}
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleTranslateToFrench(contact)}
-                              className="flex-1"
-                              data-testid={`button-translate-${contact.id}`}
-                            >
-                              <Globe className="mr-1 h-4 w-4" />
-                              French
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleAskForIntro(contact)}
-                              className="flex-1"
-                              data-testid={`button-ask-intro-${contact.id}`}
-                            >
-                              <MessageSquare className="mr-1 h-4 w-4" />
-                              Ask Intro
-                            </Button>
-                          </div>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => handleAskForIntro(contact)}
+                            className="w-full"
+                            data-testid={`button-ask-intro-${contact.id}`}
+                          >
+                            <MessageSquare className="mr-1 h-4 w-4" />
+                            Ask Intro
+                          </Button>
                         </CardContent>
                       </Card>
                     ))}
