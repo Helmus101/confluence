@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +23,7 @@ export default function Onboard() {
   const [step, setStep] = useState<"upload" | "review" | "enrich" | "complete">("upload");
   const [uploadedCount, setUploadedCount] = useState(0);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [enrichmentProgress, setEnrichmentProgress] = useState(0);
 
   const form = useForm<InsertContact>({
     resolver: zodResolver(insertContactSchema),
@@ -97,14 +98,34 @@ export default function Onboard() {
       return response.json();
     },
     onSuccess: (data) => {
-      setStep("complete");
-      queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
-      toast({ title: "Enrichment complete!", description: `${data.enriched} contacts enriched with AI.` });
+      setEnrichmentProgress(100);
+      setTimeout(() => {
+        setStep("complete");
+        queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
+        toast({ title: "Enrichment complete!", description: `${data.enriched} contacts enriched with AI.` });
+      }, 500);
     },
     onError: (error: Error) => {
+      setEnrichmentProgress(0);
       toast({ title: "Enrichment failed", description: error.message, variant: "destructive" });
     },
   });
+
+  useEffect(() => {
+    if (!enrichMutation.isPending) {
+      setEnrichmentProgress(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setEnrichmentProgress((prev) => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 15;
+      });
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [enrichMutation.isPending]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -350,8 +371,13 @@ export default function Onboard() {
               <CardDescription>Please wait while we process your contacts with AI...</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <Sparkles className="mb-4 h-16 w-16 animate-pulse text-primary" />
-              <p className="text-sm text-muted-foreground">This may take a moment...</p>
+              <Sparkles className="mb-6 h-16 w-16 animate-pulse text-primary" />
+              <div className="w-full max-w-xs space-y-3">
+                <Progress value={enrichmentProgress} className="h-2" data-testid="progress-enrichment" />
+                <p className="text-center text-sm font-medium text-muted-foreground">
+                  {Math.round(enrichmentProgress)}% — Processing {uploadedCount} contact{uploadedCount === 1 ? "" : "s"}
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}
