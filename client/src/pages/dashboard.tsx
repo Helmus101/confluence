@@ -16,9 +16,11 @@ import { ContactDetailModal } from "@/components/contact-detail-modal";
 import { NotificationCenter } from "@/components/notification-center";
 import { useToast } from "@/hooks/use-toast";
 import type { SearchResult, Contact } from "@shared/schema";
-import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap, MessageSquare, Globe } from "lucide-react";
+import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap, MessageSquare } from "lucide-react";
+import { useTranslation } from "@/lib/translation-context";
 
 export default function Dashboard() {
+  const { t, language, setLanguage } = useTranslation();
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -177,17 +179,12 @@ export default function Dashboard() {
               variant="ghost" 
               size="sm" 
               onClick={() => {
-                const lang = document.documentElement.lang === 'fr' ? 'en' : 'fr';
-                document.documentElement.lang = lang;
-                localStorage.setItem('language', lang);
-                toast({
-                  title: lang === 'fr' ? 'Français' : 'English',
-                  description: lang === 'fr' ? 'Interface switched to French' : 'Interface switched to English',
-                });
+                const newLang = language === 'fr' ? 'en' : 'fr';
+                setLanguage(newLang);
               }}
               data-testid="button-language-toggle"
             >
-              {document.documentElement.lang === 'fr' ? '🇬🇧' : '🇫🇷'}
+              {language === 'fr' ? '🇬🇧' : '🇫🇷'}
             </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">

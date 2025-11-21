@@ -13,8 +13,10 @@ import type { IntroRequest } from "@shared/schema";
 import { ArrowLeft, CheckCircle2, XCircle, Clock, Mail, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useTranslation } from "@/lib/translation-context";
 
 export default function Intros() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
   const [statusUpdates, setStatusUpdates] = useState<Record<string, string>>({});
