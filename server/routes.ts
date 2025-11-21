@@ -62,10 +62,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const row of parsed.data) {
         if (!row || typeof row !== "object") continue;
         
-        const rawText = Object.values(row).filter(Boolean).join(", ");
-        if (rawText.trim()) {
-          await storage.createContact(userId, { rawText });
-          count++;
+        const rowObj = row as Record<string, string>;
+        
+        // Check if this is a LinkedIn CSV format
+        const isLinkedIn = rowObj["First Name"] || rowObj["Last Name"] || rowObj["Email Address"];
+        
+        let contactData: any;
+        
+        if (isLinkedIn) {
+          // Parse LinkedIn CSV format
+          const firstName = (rowObj["First Name"] || "").trim();
+          const lastName = (rowObj["Last Name"] || "").trim();
+          const name = `${firstName} ${lastName}`.trim();
+          const email = (rowObj["Email Address"] || "").trim();
+          const company = (rowObj["Company"] || "").trim();
+          const position = (rowObj["Position"] || "").trim();
+          const linkedinUrl = (rowObj["URL"] || "").trim();
+          const connectedOn = (rowObj["Connected On"] || "").trim();
+          
+          // Build rawText with all available info for AI enrichment
+          const parts = [name, email, company, position, connectedOn, linkedinUrl].filter(Boolean);
+          const rawText = parts.join(", ");
+          
+          if (rawText.trim()) {
+            contactData = {
+              rawText,
+              name: name || undefined,
+              linkedinUrl: linkedinUrl || undefined,
+            };
+            await storage.createContact(userId, contactData);
+            count++;
+          }
+        } else {
+          // Fall back to generic CSV parsing
+          const rawText = Object.values(rowObj).filter(Boolean).join(", ");
+          if (rawText.trim()) {
+            await storage.createContact(userId, { rawText });
+            count++;
+          }
         }
       }
 
