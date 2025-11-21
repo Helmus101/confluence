@@ -2,15 +2,10 @@ import OpenAI from "openai";
 import type { EnrichedData, IntroMessage } from "@shared/schema";
 
 // Use Deepseek API for enrichment and search
-const deepseek = new OpenAI({
+const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
   baseURL: "https://api.deepseek.com/v1",
 });
-
-// Fallback to OpenAI if Deepseek is not available
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
-
-const client = deepseek;
 
 function extractJSON(text: string): Record<string, any> {
   const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/);
