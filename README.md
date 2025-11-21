@@ -99,7 +99,7 @@ confluence/
 │       ├── hooks/           # Custom React hooks
 │       └── App.tsx          # Main app with routing
 ├── server/
-│   ├── lib/                 # OpenAI/Deepseek integration
+│   ├── lib/                 # Deepseek AI integration
 │   ├── routes.ts            # API endpoints
 │   ├── storage.ts           # Database layer
 │   ├── index.ts             # Express setup

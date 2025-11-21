@@ -1,11 +1,7 @@
-import OpenAI from "openai";
 import type { EnrichedData, IntroMessage } from "@shared/schema";
 
-// Use Deepseek API for enrichment and search
-const client = new OpenAI({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-  baseURL: "https://api.deepseek.com/v1",
-});
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 function extractJSON(text: string): Record<string, any> {
   const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/);
@@ -14,6 +10,44 @@ function extractJSON(text: string): Record<string, any> {
     return JSON.parse(jsonStr);
   }
   return {};
+}
+
+async function callDeepseek(
+  systemPrompt: string,
+  userPrompt: string,
+  model: string = "deepseek-chat"
+): Promise<string> {
+  if (!DEEPSEEK_API_KEY) {
+    throw new Error("DEEPSEEK_API_KEY environment variable is not set");
+  }
+
+  const response = await fetch(DEEPSEEK_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Deepseek API error: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json() as any;
+  return data.choices[0].message.content || "";
 }
 
 export async function enrichContact(rawText: string): Promise<EnrichedData> {
@@ -26,22 +60,13 @@ Example output:
 
 Now extract detailed data from: ${rawText}`;
 
-    const response = await client.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content: "You are a detailed data extraction expert. Always respond with valid JSON only. Extract all available information comprehensively.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
+    const content = await callDeepseek(
+      "You are a detailed data extraction expert. Always respond with valid JSON only. Extract all available information comprehensively.",
+      prompt
+    );
 
-    const result = extractJSON(response.choices[0].message.content || "{}");
-    
+    const result = extractJSON(content);
+
     return {
       name: result.name || null,
       email: result.email || null,
@@ -98,12 +123,12 @@ export async function classifyIndustry(companyName: string): Promise<string> {
     const prompt = `Given a company name, return a single industry tag (one of fintech, consulting, luxury, retail, software, ai-startup, edtech, healthtech, government, other). Output only the tag as plain text.
 Company: ${companyName}`;
 
-    const response = await client.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [{ role: "user", content: prompt }],
-    });
+    const content = await callDeepseek(
+      "You are an industry classification expert. Respond with only the industry tag.",
+      prompt
+    );
 
-    return response.choices[0].message.content?.trim() || "other";
+    return content.trim() || "other";
   } catch (error) {
     console.error("Error classifying industry:", error);
     return "other";
@@ -126,21 +151,12 @@ Connector name (first): ${params.connectorName}
 Target company: ${params.targetCompany}
 Reason/goal: ${params.reason}`;
 
-    const response = await client.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert at writing professional introduction requests. Respond with valid JSON only.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
+    const content = await callDeepseek(
+      "You are an expert at writing professional introduction requests. Respond with valid JSON only.",
+      prompt
+    );
 
-    const result = extractJSON(response.choices[0].message.content || "{}");
+    const result = extractJSON(content);
     return {
       subject: result.subject || `Introduction to ${params.targetCompany}`,
       body: result.body || "",
@@ -154,7 +170,13 @@ Reason/goal: ${params.reason}`;
   }
 }
 
-export async function analyzeSearchQuery(query: string): Promise<{ company?: string; industry?: string; role?: string; seniority?: string; location?: string }> {
+export async function analyzeSearchQuery(query: string): Promise<{
+  company?: string;
+  industry?: string;
+  role?: string;
+  seniority?: string;
+  location?: string;
+}> {
   try {
     const prompt = `Parse this search query and extract the user's intent. They're looking for people in their network. Return a JSON object with fields: company (specific company name if mentioned), industry (industry name if mentioned), role (job title/role if mentioned), seniority (career level: intern/junior/mid/senior), location (city/country if mentioned). If not mentioned, set to null.
 
@@ -162,21 +184,12 @@ Search query: "${query}"
 
 Example: "fintech intern in Paris" -> {"company":null,"industry":"fintech","role":null,"seniority":"intern","location":"Paris"}`;
 
-    const response = await client.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content: "You are a search query analyzer. Respond with valid JSON only.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
+    const content = await callDeepseek(
+      "You are a search query analyzer. Respond with valid JSON only.",
+      prompt
+    );
 
-    const result = extractJSON(response.choices[0].message.content || "{}");
+    const result = extractJSON(content);
     return {
       company: result.company || undefined,
       industry: result.industry || undefined,
@@ -203,21 +216,12 @@ Requester name: ${params.requesterName}
 Requester short pitch: ${params.requesterPitch}
 Target contact context: ${params.targetCompany}`;
 
-    const response = await client.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert at writing warm introduction emails. Respond with valid JSON only.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
+    const content = await callDeepseek(
+      "You are an expert at writing warm introduction emails. Respond with valid JSON only.",
+      prompt
+    );
 
-    const result = extractJSON(response.choices[0].message.content || "{}");
+    const result = extractJSON(content);
     return {
       subject: result.subject || `Introduction: ${params.requesterName}`,
       body: result.body || "",

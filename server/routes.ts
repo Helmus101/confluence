@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, loginUserSchema, insertContactSchema, insertIntroRequestSchema } from "@shared/schema";
 import type { SearchResult } from "@shared/schema";
-import { enrichContact, generateUserToConnectorMessage, generateConnectorToTargetMessage, analyzeSearchQuery } from "./lib/openai";
+import { enrichContact, generateUserToConnectorMessage, generateConnectorToTargetMessage, analyzeSearchQuery } from "./lib/deepseek";
 import { normalizeCompanyName, getStartOfWeek } from "./lib/utils";
 import Papa from "papaparse";
 import multer from "multer";
