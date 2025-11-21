@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { SearchResult, Contact } from "@shared/schema";
-import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload } from "lucide-react";
+import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles } from "lucide-react";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -114,47 +115,135 @@ export default function Dashboard() {
       </header>
 
       <main className="container px-4 py-8 md:px-6">
-        <div className="mb-8">
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
           <h1 className="mb-2 font-heading text-3xl font-semibold">
             Welcome back, {user?.name?.split(" ")[0]}
           </h1>
           <p className="text-muted-foreground">Search your network to find warm introduction opportunities</p>
-        </div>
+        </motion.div>
 
         {!activeSearch && (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="hover-elevate">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Your Network</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold" data-testid="text-contacts-count">{contactsData?.contacts?.length || 0}</div>
-                  <p className="text-xs text-muted-foreground">Total contacts</p>
-                </CardContent>
-              </Card>
-              <Card className="hover-elevate">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Intro Requests</CardTitle>
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Active requests</p>
-                </CardContent>
-              </Card>
-              <Card className="hover-elevate">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">--</div>
-                  <p className="text-xs text-muted-foreground">Completed intros</p>
-                </CardContent>
-              </Card>
-            </div>
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <motion.div 
+              className="grid gap-4 md:grid-cols-3"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                whileHover={{ scale: 1.02, y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Card className="hover-elevate relative overflow-hidden group">
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100"
+                    transition={{ duration: 0.3 }}
+                  />
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                    <CardTitle className="text-sm font-medium">Your Network</CardTitle>
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="relative">
+                    <motion.div 
+                      className="text-2xl font-bold" 
+                      data-testid="text-contacts-count"
+                      key={contactsData?.contacts?.length}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    >
+                      {contactsData?.contacts?.length || 0}
+                    </motion.div>
+                    <p className="text-xs text-muted-foreground">Total contacts</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                whileHover={{ scale: 1.02, y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Card className="hover-elevate relative overflow-hidden group">
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100"
+                    transition={{ duration: 0.3 }}
+                  />
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                    <CardTitle className="text-sm font-medium">Intro Requests</CardTitle>
+                    <motion.div
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="relative">
+                    <div className="text-2xl font-bold">0</div>
+                    <p className="text-xs text-muted-foreground">Active requests</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                whileHover={{ scale: 1.02, y: -5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Card className="hover-elevate relative overflow-hidden group">
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100"
+                    transition={{ duration: 0.3 }}
+                  />
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                    <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                    <motion.div
+                      animate={{ rotate: [-10, 10, -10] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </motion.div>
+                  </CardHeader>
+                  <CardContent className="relative">
+                    <div className="text-2xl font-bold">--</div>
+                    <p className="text-xs text-muted-foreground">Completed intros</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
             
             <Card className="border-2 border-dashed hover-elevate">
               <CardHeader>
@@ -180,7 +269,7 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         )}
 
         {isLoading && activeSearch && (

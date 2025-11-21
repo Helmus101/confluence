@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,12 +12,76 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { apiRequest } from "@/lib/queryClient";
 import { insertUserSchema, type InsertUser, type User } from "@shared/schema";
-import { Network } from "lucide-react";
+import { Network, CheckCircle2 } from "lucide-react";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut",
+    },
+  },
+};
+
+const rotateVariants = {
+  hidden: { opacity: 0, scale: 0, rotate: -180 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    rotate: 0,
+    transition: {
+      type: "spring",
+      stiffness: 200,
+      damping: 20,
+      duration: 0.8,
+    },
+  },
+};
+
+const slideVariants = {
+  hidden: { opacity: 0, x: -50 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.7,
+      ease: [0.23, 1, 0.320, 1],
+    },
+  },
+};
+
+const successVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 25,
+    },
+  },
+};
 
 export default function Signup() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const form = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
@@ -43,9 +108,12 @@ export default function Signup() {
       return response.json();
     },
     onSuccess: (data) => {
-      login(data.user);
-      toast({ title: "Welcome to Confluence!", description: "Your account has been created successfully." });
-      setLocation("/onboard");
+      setShowSuccess(true);
+      setTimeout(() => {
+        login(data.user);
+        toast({ title: "Welcome to Confluence!", description: "Your account has been created successfully." });
+        setLocation("/onboard");
+      }, 1500);
     },
     onError: (error: Error) => {
       toast({ title: "Signup failed", description: error.message, variant: "destructive" });
@@ -53,112 +121,266 @@ export default function Signup() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary">
-              <Network className="h-6 w-6 text-primary-foreground" />
-            </div>
-          </div>
-          <h1 className="mb-2 font-heading text-3xl font-semibold">Create your account</h1>
-          <p className="text-muted-foreground">Start building your professional network</p>
-        </div>
+    <motion.div 
+      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Animated background elements */}
+      <motion.div
+        className="absolute inset-0 opacity-30"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.1 }}
+        transition={{ duration: 1 }}
+      >
+        <motion.div
+          className="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full blur-3xl"
+          animate={{
+            y: [0, 50, 0],
+            x: [0, 30, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-10 w-72 h-72 bg-primary rounded-full blur-3xl"
+          animate={{
+            y: [0, -50, 0],
+            x: [0, -30, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.5,
+          }}
+        />
+      </motion.div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign Up</CardTitle>
-            <CardDescription>Enter your details to get started</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => signupMutation.mutate(data))} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" data-testid="input-name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="you@university.edu" data-testid="input-email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••••" data-testid="input-password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="linkedinUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>LinkedIn Profile URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://linkedin.com/in/yourprofile" data-testid="input-linkedin" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="university"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>University (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Stanford University" data-testid="input-university" {...field} value={field.value || ""} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={signupMutation.isPending}
-                  data-testid="button-submit"
+      <motion.div 
+        className="w-full max-w-md relative z-10"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Logo */}
+        <motion.div 
+          className="mb-8 text-center"
+          variants={itemVariants}
+        >
+          <motion.div 
+            className="mb-4 flex justify-center"
+            variants={rotateVariants}
+          >
+            <motion.div 
+              className="flex h-12 w-12 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/60"
+              whileHover={{ scale: 1.1, rotate: 10 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <Network className="h-6 w-6 text-primary-foreground" />
+            </motion.div>
+          </motion.div>
+          <motion.h1 
+            className="mb-2 font-heading text-3xl font-semibold"
+            variants={itemVariants}
+          >
+            Create your account
+          </motion.h1>
+          <motion.p 
+            className="text-muted-foreground"
+            variants={itemVariants}
+          >
+            Start building your professional network
+          </motion.p>
+        </motion.div>
+
+        {/* Card */}
+        <motion.div
+          variants={itemVariants}
+          whileHover={{ y: -5 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="border border-primary/10 bg-background/80 backdrop-blur-md shadow-2xl">
+            <CardHeader>
+              <CardTitle>Sign Up</CardTitle>
+              <CardDescription>Enter your details to get started</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {showSuccess ? (
+                <motion.div
+                  className="flex flex-col items-center justify-center py-8"
+                  variants={successVariants}
                 >
-                  {signupMutation.isPending ? "Creating account..." : "Create Account"}
-                </Button>
-              </form>
-            </Form>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/login">
-                <a className="text-primary hover:underline" data-testid="link-login">
-                  Log in
-                </a>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1], rotate: [0, 360] }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                  </motion.div>
+                  <motion.p 
+                    className="mt-4 text-center font-semibold"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Account created successfully!
+                  </motion.p>
+                </motion.div>
+              ) : (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit((data) => signupMutation.mutate(data))} className="space-y-4">
+                    <motion.div variants={slideVariants}>
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="John Doe" 
+                                data-testid="input-name" 
+                                {...field}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/50"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
+
+                    <motion.div variants={slideVariants}>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="email" 
+                                placeholder="you@university.edu" 
+                                data-testid="input-email" 
+                                {...field}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/50"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
+
+                    <motion.div variants={slideVariants}>
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="••••••••" 
+                                data-testid="input-password" 
+                                {...field}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/50"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
+
+                    <motion.div variants={slideVariants}>
+                      <FormField
+                        control={form.control}
+                        name="linkedinUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>LinkedIn Profile URL</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="https://linkedin.com/in/yourprofile" 
+                                data-testid="input-linkedin" 
+                                {...field}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/50"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
+
+                    <motion.div variants={slideVariants}>
+                      <FormField
+                        control={form.control}
+                        name="university"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>University (Optional)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Stanford University" 
+                                data-testid="input-university" 
+                                {...field} 
+                                value={field.value || ""}
+                                className="transition-all duration-200 focus:ring-2 focus:ring-primary/50"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
+
+                    <motion.div
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={signupMutation.isPending}
+                        data-testid="button-submit"
+                      >
+                        {signupMutation.isPending ? "Creating account..." : "Create Account"}
+                      </Button>
+                    </motion.div>
+                  </form>
+                </Form>
+              )}
+              
+              {!showSuccess && (
+                <motion.div 
+                  className="mt-4 text-center text-sm"
+                  variants={itemVariants}
+                >
+                  Already have an account?{" "}
+                  <Link href="/login">
+                    <motion.a 
+                      className="text-primary hover:underline" 
+                      data-testid="link-login"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      Log in
+                    </motion.a>
+                  </Link>
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
