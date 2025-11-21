@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { SearchResult, Contact } from "@shared/schema";
-import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles } from "lucide-react";
+import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye } from "lucide-react";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -36,15 +37,36 @@ export default function Dashboard() {
     gcTime: 0,
   });
 
+  const [searchProgress, setSearchProgress] = useState(0);
+
   const { data: searchResults, isLoading } = useQuery<SearchResult>({
     queryKey: ["/api/search", activeSearch, user?.id],
     queryFn: async () => {
+      setSearchProgress(0);
       const response = await fetch(`/api/search?q=${encodeURIComponent(activeSearch)}&userId=${user?.id}`);
       if (!response.ok) throw new Error("Search failed");
-      return response.json();
+      const data = await response.json();
+      setSearchProgress(100);
+      return data;
     },
     enabled: activeSearch.length > 0 && !!user,
   });
+
+  useEffect(() => {
+    if (!isLoading) {
+      setSearchProgress(100);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setSearchProgress((prev) => {
+        if (prev >= 95) return prev;
+        return prev + Math.random() * 20;
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,9 +119,15 @@ export default function Dashboard() {
             </form>
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/network">
+              <Button variant="ghost" size="sm" data-testid="button-network-viz">
+                <Eye className="mr-2 h-4 w-4" />
+                Visualize
+              </Button>
+            </Link>
             <Button variant="default" size="sm" onClick={handleImportNetwork} data-testid="button-import-network">
               <Upload className="mr-2 h-4 w-4" />
-              Import Network
+              Import
             </Button>
             <Link href="/intros">
               <Button variant="ghost" size="icon" data-testid="button-intros">
@@ -272,12 +300,22 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {isLoading && activeSearch && (
-          <div className="space-y-4">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
+        {(isLoading || searchProgress > 0) && activeSearch && (
+          <motion.div className="space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Searching network</p>
+                <p className="text-xs text-muted-foreground">{Math.min(Math.floor(searchProgress), 100)}%</p>
+              </div>
+              <Progress value={searchProgress} className="h-2" />
+            </div>
+            {isLoading && (
+              <div className="space-y-4">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            )}
+          </motion.div>
         )}
 
         {searchResults && activeSearch && (
@@ -348,23 +386,36 @@ export default function Dashboard() {
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <CardTitle className="text-base">{match.company}</CardTitle>
-                              <CardDescription>
-                                Available via {match.connectorName}
+                              <CardDescription className="line-clamp-2">
+                                {match.contacts.length > 0 && match.contacts[0].name ? `Via ${match.contacts[0].name}` : `Available via ${match.connectorName}`}
                               </CardDescription>
                             </div>
                             {getConfidenceBadge(match.confidence)}
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                          {match.contacts.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground">Contacts at {match.company}:</p>
+                              <div className="space-y-1">
+                                {match.contacts.slice(0, 2).map((contact, cidx) => (
+                                  <div key={cidx} className="text-sm">
+                                    <p className="font-medium">{contact.name || "Unknown"}</p>
+                                    {contact.title && <p className="text-xs text-muted-foreground">{contact.title}</p>}
+                                  </div>
+                                ))}
+                                {match.contacts.length > 2 && (
+                                  <p className="text-xs text-muted-foreground">+{match.contacts.length - 2} more</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
                           <p className="text-sm text-muted-foreground">
-                            We've found a possible intro path to {match.company} via a verified Confluence member.
-                            To protect privacy, we will only reveal the connector's contact if they accept your
-                            request.
+                            {match.connectorName} from your network can introduce you.
                           </p>
                           <div className="flex items-center gap-2">
                             <div className="text-xs text-muted-foreground">
-                              Connector score: {match.connectorStats.successCount} successful •{" "}
-                              {match.connectorStats.responseRate}% response rate
+                              Score: {match.connectorStats.successCount} successful • {match.connectorStats.responseRate}% response
                             </div>
                           </div>
                           <Link href={`/request-intro?connector=${match.connectorId}&company=${match.company}`}>
