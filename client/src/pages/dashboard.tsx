@@ -31,6 +31,8 @@ export default function Dashboard() {
       return response.json();
     },
     enabled: !!user,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: searchResults, isLoading } = useQuery<SearchResult>({

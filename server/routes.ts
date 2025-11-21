@@ -240,13 +240,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find indirect matches from ALL other users' networks
       const allOtherContacts = await storage.getAllEnrichedContacts(userId);
       const indirectMatches: SearchResult["indirect"] = [];
-      const seenCompanies = new Set<string>();
+      const seenCompanies = new Map<string, Array<typeof allOtherContacts[0]>>();
 
       for (const contact of allOtherContacts) {
         if (!contact.company) continue;
         
         const normalized = normalizeCompanyName(contact.company);
-        if (seenCompanies.has(normalized)) continue;
         
         // Check if company matches search intent
         const companyMatches = !searchIntent.company || contact.company.toLowerCase().includes(searchIntent.company.toLowerCase());
@@ -257,6 +256,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (!(companyMatches || industryMatches || roleMatches || seniorityMatches || locationMatches)) continue;
         
+        if (!seenCompanies.has(normalized)) {
+          seenCompanies.set(normalized, []);
+        }
+        seenCompanies.get(normalized)!.push(contact);
+      }
+
+      for (const [normalized, contacts] of seenCompanies.entries()) {
+        const contact = contacts[0];
         const connectorId = contact.userId;
         const connector = await storage.getUser(connectorId);
         if (!connector) continue;
@@ -264,10 +271,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const stats = await storage.getConnectorStats(connectorId);
         
         indirectMatches.push({
-          company: contact.company,
+          company: contact.company || "",
           companyNormalized: normalized,
           connectorId,
           connectorName: connector.name.split(" ")[0],
+          contacts: contacts.map((c) => ({
+            id: c.id,
+            name: c.name,
+            title: c.title,
+            linkedinSummary: c.linkedinSummary,
+          })),
           connectorStats: {
             successCount: stats?.successCount || 0,
             responseRate: stats?.responseRate || 0,
@@ -275,8 +288,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           confidence: contact.confidence || 50,
           matchType: "indirect",
         });
-        
-        seenCompanies.add(normalized);
       }
 
       const result: SearchResult = {
