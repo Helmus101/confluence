@@ -23,6 +23,16 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
 
+  const { data: contactsData } = useQuery({
+    queryKey: ["/api/contacts", user?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/contacts?userId=${user?.id}`);
+      if (!response.ok) throw new Error("Failed to fetch contacts");
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
   const { data: searchResults, isLoading } = useQuery<SearchResult>({
     queryKey: ["/api/search", activeSearch, user?.id],
     queryFn: async () => {
@@ -118,7 +128,7 @@ export default function Dashboard() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold" data-testid="text-contacts-count">{contactsData?.contacts?.length || 0}</div>
                   <p className="text-xs text-muted-foreground">Total contacts</p>
                 </CardContent>
               </Card>

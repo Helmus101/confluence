@@ -12,6 +12,15 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 
 const client = deepseek;
 
+function extractJSON(text: string): Record<string, any> {
+  const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    const jsonStr = jsonMatch[1] || jsonMatch[0];
+    return JSON.parse(jsonStr);
+  }
+  return {};
+}
+
 export async function enrichContact(rawText: string): Promise<EnrichedData> {
   try {
     const prompt = `You are a structured data extractor. Input: a single raw contact string or CSV row from a user (could be partial). Output: a single valid JSON object with fields: name, company, title, industry, seniority (e.g. intern/junior/mid/senior/manager), location (city/country if available), confidence (0.0-1.0). If not available, set field to null. Keep values concise.
@@ -36,7 +45,7 @@ Now process this input: ${rawText}`;
       ],
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = extractJSON(response.choices[0].message.content || "{}");
     
     return {
       name: result.name || null,
@@ -108,7 +117,7 @@ Reason/goal: ${params.reason}`;
       ],
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = extractJSON(response.choices[0].message.content || "{}");
     return {
       subject: result.subject || `Introduction to ${params.targetCompany}`,
       body: result.body || "",
@@ -144,7 +153,7 @@ Example: "fintech intern in Paris" -> {"company":null,"industry":"fintech","role
       ],
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = extractJSON(response.choices[0].message.content || "{}");
     return {
       company: result.company || undefined,
       industry: result.industry || undefined,
@@ -171,8 +180,8 @@ Requester name: ${params.requesterName}
 Requester short pitch: ${params.requesterPitch}
 Target contact context: ${params.targetCompany}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
+    const response = await client.chat.completions.create({
+      model: "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -183,10 +192,9 @@ Target contact context: ${params.targetCompany}`;
           content: prompt,
         },
       ],
-      response_format: { type: "json_object" },
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
+    const result = extractJSON(response.choices[0].message.content || "{}");
     return {
       subject: result.subject || `Introduction: ${params.requesterName}`,
       body: result.body || "",
