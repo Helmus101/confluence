@@ -165,6 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           industry: enrichedData.industry,
           seniority: enrichedData.seniority,
           location: enrichedData.location,
+          linkedinSummary: enrichedData.linkedinSummary,
           confidence: enrichedData.confidence,
           enriched: true,
         });

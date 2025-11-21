@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
+  linkedinUrl: text("linkedin_url").notNull(),
   university: text("university"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -40,6 +41,7 @@ export const contacts = pgTable("contacts", {
   // Interest & relevance
   recentRoleChange: boolean("recent_role_change"),
   industryFit: text("industry_fit"),
+  linkedinSummary: text("linkedin_summary"),
   // Metadata
   enriched: boolean("enriched").default(false).notNull(),
   confidence: integer("confidence"),
@@ -58,6 +60,14 @@ export const introRequests = pgTable("intro_requests", {
   messages: jsonb("messages"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  introRequestId: varchar("intro_request_id").notNull().references(() => introRequests.id),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const connectorStats = pgTable("connector_stats", {
@@ -79,6 +89,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
   name: true,
+  linkedinUrl: true,
   university: true,
 });
 
@@ -102,6 +113,12 @@ export const insertIntroRequestSchema = createInsertSchema(introRequests).pick({
   contactId: true,
 });
 
+export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
+  introRequestId: true,
+  senderId: true,
+  content: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -109,6 +126,8 @@ export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = z.infer<typeof insertContactSchema>;
 export type IntroRequest = typeof introRequests.$inferSelect;
 export type InsertIntroRequest = z.infer<typeof insertIntroRequestSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ConnectorStats = typeof connectorStats.$inferSelect;
 export type RateLimit = typeof rateLimits.$inferSelect;
 
@@ -132,6 +151,7 @@ export interface EnrichedData {
   graduationYear: number | null;
   recentRoleChange: boolean | null;
   industryFit: string | null;
+  linkedinSummary: string | null;
   confidence: number;
 }
 
@@ -142,6 +162,12 @@ export interface SearchResult {
     companyNormalized: string;
     connectorId: string;
     connectorName: string;
+    contacts: Array<{
+      id: string;
+      name: string | null;
+      title: string | null;
+      linkedinSummary: string | null;
+    }>;
     connectorStats: {
       successCount: number;
       responseRate: number;

@@ -23,11 +23,11 @@ function extractJSON(text: string): Record<string, any> {
 
 export async function enrichContact(rawText: string): Promise<EnrichedData> {
   try {
-    const prompt = `You are a detailed contact enrichment expert. Extract comprehensive structured data from the input. Output ONLY a valid JSON object with these fields (set to null if unavailable): name, email, phone, company, title, industry, seniority (intern/junior/mid/senior/manager/director), location, companySize (startup/small/medium/large/enterprise), fundingStage (bootstrapped/seed/series-a/series-b/public), yearsExperience (number), skills (array of strings), education, university, degree (BS/BA/MS/MBA/PhD), major, graduationYear (number), recentRoleChange (boolean), industryFit (string describing relevance), confidence (0.0-1.0).
+    const prompt = `You are a detailed contact enrichment expert. Extract comprehensive structured data from the input. Output ONLY a valid JSON object with these fields (set to null if unavailable): name, email, phone, company, title, industry, seniority (intern/junior/mid/senior/manager/director), location, companySize (startup/small/medium/large/enterprise), fundingStage (bootstrapped/seed/series-a/series-b/public), yearsExperience (number), skills (array of strings), education, university, degree (BS/BA/MS/MBA/PhD), major, graduationYear (number), recentRoleChange (boolean), industryFit (string describing relevance), linkedinSummary (2-3 sentence professional summary like a LinkedIn headline and about section), confidence (0.0-1.0).
 
 Example input: "Sarah Chen, sarah@techcorp.com, TechCorp, Senior Product Manager, Stanford BS CS 2016, 7 years fintech"
 Example output:
-{"name":"Sarah Chen","email":"sarah@techcorp.com","phone":null,"company":"TechCorp","title":"Senior Product Manager","industry":"fintech","seniority":"senior","location":null,"companySize":"large","fundingStage":"series-b","yearsExperience":7,"skills":["product management","fintech","leadership"],"education":"Stanford","university":"Stanford","degree":"BS","major":"Computer Science","graduationYear":2016,"recentRoleChange":false,"industryFit":"Strong fintech background and PM expertise","confidence":0.92}
+{"name":"Sarah Chen","email":"sarah@techcorp.com","phone":null,"company":"TechCorp","title":"Senior Product Manager","industry":"fintech","seniority":"senior","location":null,"companySize":"large","fundingStage":"series-b","yearsExperience":7,"skills":["product management","fintech","leadership"],"education":"Stanford","university":"Stanford","degree":"BS","major":"Computer Science","graduationYear":2016,"recentRoleChange":false,"industryFit":"Strong fintech background and PM expertise","linkedinSummary":"Senior Product Manager at TechCorp with 7 years of experience building fintech solutions. Stanford CS graduate passionate about user-centric product design.","confidence":0.92}
 
 Now extract detailed data from: ${rawText}`;
 
@@ -67,6 +67,7 @@ Now extract detailed data from: ${rawText}`;
       graduationYear: result.graduationYear || null,
       recentRoleChange: result.recentRoleChange || null,
       industryFit: result.industryFit || null,
+      linkedinSummary: result.linkedinSummary || null,
       confidence: Math.round((result.confidence || 0.5) * 100),
     };
   } catch (error) {
@@ -91,6 +92,7 @@ Now extract detailed data from: ${rawText}`;
       graduationYear: null,
       recentRoleChange: null,
       industryFit: null,
+      linkedinSummary: null,
       confidence: 0,
     };
   }

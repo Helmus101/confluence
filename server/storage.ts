@@ -7,8 +7,10 @@ import type {
   InsertIntroRequest,
   ConnectorStats,
   RateLimit,
+  ChatMessage,
+  InsertChatMessage,
 } from "@shared/schema";
-import { users, contacts, introRequests, connectorStats, rateLimits } from "@shared/schema";
+import { users, contacts, introRequests, connectorStats, rateLimits, chatMessages } from "@shared/schema";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { normalizeCompanyName, getStartOfWeek } from "./lib/utils";
@@ -43,6 +45,10 @@ export interface IStorage {
   // Rate Limits
   getRateLimit(userId: string, weekStart: Date): Promise<RateLimit | undefined>;
   createOrUpdateRateLimit(userId: string, weekStart: Date): Promise<RateLimit>;
+
+  // Chat Messages
+  getChatMessages(introRequestId: string): Promise<ChatMessage[]>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -222,6 +228,19 @@ export class DrizzleStorage implements IStorage {
     }
     
     return limit;
+  }
+
+  async getChatMessages(introRequestId: string): Promise<ChatMessage[]> {
+    return await this.db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.introRequestId, introRequestId))
+      .orderBy(chatMessages.createdAt);
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const result = await this.db.insert(chatMessages).values(message).returning();
+    return result[0];
   }
 }
 
