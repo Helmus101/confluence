@@ -69,14 +69,23 @@ A professional networking platform that helps early-career talent find warm intr
    npm run dev
    ```
    
-   The app will be available at `http://localhost:5000`
+   The app will be available at `http://localhost:3000`
 
 ## Available Scripts
 
-- `npm run dev` - Start development server (Express + Vite HMR)
+- `npm run dev` - Start development server on localhost:3000 (Express + Vite HMR)
 - `npm run build` - Build for production
 - `npm run db:push` - Sync database schema with your PostgreSQL database
 - `npm run db:push -- --force` - Force sync (use if schema conflicts occur)
+
+## Running on Different Ports
+
+By default, the app runs on port 3000. To use a different port:
+```bash
+PORT=4000 npm run dev
+```
+
+On Replit, it defaults to port 5000 (the only non-firewalled port).
 
 ## Project Structure
 
@@ -194,7 +203,8 @@ NODE_ENV=development
 - Review error logs in console
 
 ### Port already in use
-- Change port in server/index.ts or use: `PORT=3000 npm run dev`
+- Change port using the PORT environment variable: `PORT=4000 npm run dev`
+- Default is 3000 for local dev, 5000 for Replit
 
 ## Development Notes
 
