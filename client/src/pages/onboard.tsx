@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -97,6 +98,7 @@ export default function Onboard() {
     },
     onSuccess: (data) => {
       setStep("complete");
+      queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
       toast({ title: "Enrichment complete!", description: `${data.enriched} contacts enriched with AI.` });
     },
     onError: (error: Error) => {
