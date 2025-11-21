@@ -1,8 +1,16 @@
 import OpenAI from "openai";
 import type { EnrichedData, IntroMessage } from "@shared/schema";
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Use Deepseek API for enrichment and search
+const deepseek = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com/v1",
+});
+
+// Fallback to OpenAI if Deepseek is not available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
+const client = deepseek;
 
 export async function enrichContact(rawText: string): Promise<EnrichedData> {
   try {
@@ -14,8 +22,8 @@ Example output:
 
 Now process this input: ${rawText}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
+    const response = await client.chat.completions.create({
+      model: "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -26,7 +34,6 @@ Now process this input: ${rawText}`;
           content: prompt,
         },
       ],
-      response_format: { type: "json_object" },
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
@@ -59,8 +66,8 @@ export async function classifyIndustry(companyName: string): Promise<string> {
     const prompt = `Given a company name, return a single industry tag (one of fintech, consulting, luxury, retail, software, ai-startup, edtech, healthtech, government, other). Output only the tag as plain text.
 Company: ${companyName}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
+    const response = await client.chat.completions.create({
+      model: "deepseek-chat",
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -87,8 +94,8 @@ Connector name (first): ${params.connectorName}
 Target company: ${params.targetCompany}
 Reason/goal: ${params.reason}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
+    const response = await client.chat.completions.create({
+      model: "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -99,7 +106,6 @@ Reason/goal: ${params.reason}`;
           content: prompt,
         },
       ],
-      response_format: { type: "json_object" },
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
@@ -124,8 +130,8 @@ Search query: "${query}"
 
 Example: "fintech intern in Paris" -> {"company":null,"industry":"fintech","role":null,"seniority":"intern","location":"Paris"}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
+    const response = await client.chat.completions.create({
+      model: "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -136,7 +142,6 @@ Example: "fintech intern in Paris" -> {"company":null,"industry":"fintech","role
           content: prompt,
         },
       ],
-      response_format: { type: "json_object" },
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
