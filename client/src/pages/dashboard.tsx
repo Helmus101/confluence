@@ -348,6 +348,8 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </motion.div>
+            </motion.div>
+          </div>
         )}
 
         {(isLoading || searchProgress > 0) && activeSearch && (
@@ -504,8 +506,6 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             )}
-            </motion.div>
-            </motion.div>
           </div>
         )}
       </main>
