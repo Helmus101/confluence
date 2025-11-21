@@ -184,7 +184,8 @@ export default function Dashboard() {
               size="sm" 
               onClick={() => {
                 const newLang = language === 'fr' ? 'en' : 'fr';
-                setLanguage(newLang);
+                localStorage.setItem("language", newLang);
+                window.location.reload();
               }}
               data-testid="button-language-toggle"
             >

@@ -83,6 +83,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     setLanguageState(lang);
     document.documentElement.lang = lang;
     localStorage.setItem("language", lang);
+    window.location.reload();
   };
 
   const t = (key: string, params?: Record<string, string>): string => {
