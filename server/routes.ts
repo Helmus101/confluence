@@ -7,6 +7,8 @@ import { enrichContact, generateUserToConnectorMessage, generateConnectorToTarge
 import { normalizeCompanyName, getStartOfWeek } from "./lib/utils";
 import Papa from "papaparse";
 import multer from "multer";
+import { promises as fs } from "fs";
+import { join } from "path";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -471,6 +473,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(requests);
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Download project as ZIP
+  app.get("/api/download-project", async (req, res) => {
+    try {
+      const archiver = require("archiver");
+      
+      const archive = archiver("zip", { zlib: { level: 9 } });
+      
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", "attachment; filename=confluence-project.zip");
+      
+      archive.pipe(res);
+      
+      // Add client and server directories
+      archive.directory(join(process.cwd(), "client/src"), "client/src");
+      archive.directory(join(process.cwd(), "server"), "server");
+      archive.directory(join(process.cwd(), "shared"), "shared");
+      
+      // Add key config files
+      const filesToAdd = [
+        "package.json",
+        "tsconfig.json",
+        "vite.config.ts",
+        "tailwind.config.ts",
+        "drizzle.config.ts",
+        ".env.example",
+      ];
+      
+      for (const file of filesToAdd) {
+        const filePath = join(process.cwd(), file);
+        try {
+          await fs.access(filePath);
+          archive.file(filePath, { name: file });
+        } catch {
+          // File doesn't exist, skip it
+        }
+      }
+      
+      await archive.finalize();
+    } catch (error: any) {
+      console.error("Download error:", error);
+      res.status(500).json({ error: "Failed to create download" });
     }
   });
 

@@ -15,7 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ContactDetailModal } from "@/components/contact-detail-modal";
 import { useToast } from "@/hooks/use-toast";
 import type { SearchResult, Contact } from "@shared/schema";
-import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap } from "lucide-react";
+import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap, Download } from "lucide-react";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -110,6 +110,32 @@ export default function Dashboard() {
     setLocation("/");
   };
 
+  const handleDownloadCode = async () => {
+    try {
+      const response = await fetch("/api/download-project");
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "confluence-project.zip";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({
+        title: "Success",
+        description: "Project downloaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download project",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -166,6 +192,9 @@ export default function Dashboard() {
                 <Mail className="h-5 w-5" />
               </Button>
             </Link>
+            <Button variant="ghost" size="icon" onClick={handleDownloadCode} title="Download project as ZIP" data-testid="button-download">
+              <Download className="h-5 w-5" />
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
               <LogOut className="h-5 w-5" />
