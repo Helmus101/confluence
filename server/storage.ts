@@ -23,6 +23,7 @@ export interface IStorage {
   createContact(userId: string, contact: Partial<InsertContact>): Promise<Contact>;
   updateContact(id: string, updates: Partial<Contact>): Promise<Contact | undefined>;
   getContactsByCompany(companyNormalized: string, excludeUserId?: string): Promise<Contact[]>;
+  getAllEnrichedContacts(excludeUserId?: string): Promise<Contact[]>;
 
   // Intro Requests
   getIntroRequest(id: string): Promise<IntroRequest | undefined>;
@@ -123,6 +124,14 @@ export class MemStorage implements IStorage {
       if (!contact.company) return false;
       if (excludeUserId && contact.userId === excludeUserId) return false;
       return normalizeCompanyName(contact.company) === companyNormalized;
+    });
+  }
+
+  async getAllEnrichedContacts(excludeUserId?: string): Promise<Contact[]> {
+    return Array.from(this.contacts.values()).filter((contact) => {
+      if (!contact.enriched) return false;
+      if (excludeUserId && contact.userId === excludeUserId) return false;
+      return true;
     });
   }
 

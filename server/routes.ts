@@ -187,15 +187,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ direct: [], indirect: [] });
       }
 
-      const userContacts = await storage.getUserContacts(userId);
-      if (userContacts.length === 0) {
-        return res.json({ direct: [], indirect: [] });
-      }
-
       // Use AI to analyze the search query
       const searchIntent = await analyzeSearchQuery(query);
 
-      // Find direct matches using AI-analyzed intent
+      // Get user's own contacts for direct matches
+      const userContacts = await storage.getUserContacts(userId);
+      
+      // Find direct matches using AI-analyzed intent (from user's own contacts)
       const directMatches = userContacts.filter((contact) => {
         if (!contact.enriched) return false;
         
@@ -220,11 +218,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return matches;
       });
 
-      // Find indirect matches
+      // Find indirect matches from ALL other users' networks
+      const allOtherContacts = await storage.getAllEnrichedContacts(userId);
       const indirectMatches: SearchResult["indirect"] = [];
       const seenCompanies = new Set<string>();
 
-      for (const contact of userContacts) {
+      for (const contact of allOtherContacts) {
         if (!contact.company) continue;
         
         const normalized = normalizeCompanyName(contact.company);
@@ -232,35 +231,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check if company matches search intent
         const companyMatches = !searchIntent.company || contact.company.toLowerCase().includes(searchIntent.company.toLowerCase());
-        if (!companyMatches) continue;
+        const industryMatches = !searchIntent.industry || contact.industry?.toLowerCase().includes(searchIntent.industry.toLowerCase());
+        const roleMatches = !searchIntent.role || contact.title?.toLowerCase().includes(searchIntent.role.toLowerCase());
+        const seniorityMatches = !searchIntent.seniority || contact.seniority?.toLowerCase().includes(searchIntent.seniority.toLowerCase());
+        const locationMatches = !searchIntent.location || contact.location?.toLowerCase().includes(searchIntent.location.toLowerCase());
         
-        const othersContacts = await storage.getContactsByCompany(normalized, userId);
+        if (!(companyMatches || industryMatches || roleMatches || seniorityMatches || locationMatches)) continue;
         
-        if (othersContacts.length > 0) {
-          for (const otherContact of othersContacts) {
-            const connectorId = otherContact.userId;
-            const connector = await storage.getUser(connectorId);
-            if (!connector) continue;
+        const connectorId = contact.userId;
+        const connector = await storage.getUser(connectorId);
+        if (!connector) continue;
 
-            const stats = await storage.getConnectorStats(connectorId);
-            
-            indirectMatches.push({
-              company: contact.company,
-              companyNormalized: normalized,
-              connectorId,
-              connectorName: connector.name.split(" ")[0],
-              connectorStats: {
-                successCount: stats?.successCount || 0,
-                responseRate: stats?.responseRate || 0,
-              },
-              confidence: contact.confidence || 50,
-              matchType: "indirect",
-            });
-            
-            seenCompanies.add(normalized);
-            break;
-          }
-        }
+        const stats = await storage.getConnectorStats(connectorId);
+        
+        indirectMatches.push({
+          company: contact.company,
+          companyNormalized: normalized,
+          connectorId,
+          connectorName: connector.name.split(" ")[0],
+          connectorStats: {
+            successCount: stats?.successCount || 0,
+            responseRate: stats?.responseRate || 0,
+          },
+          confidence: contact.confidence || 50,
+          matchType: "indirect",
+        });
+        
+        seenCompanies.add(normalized);
       }
 
       const result: SearchResult = {
