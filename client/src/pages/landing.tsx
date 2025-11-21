@@ -69,36 +69,36 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+        <div className="mx-auto w-full max-w-7xl flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
           <motion.div 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-shrink-0"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Network className="h-6 w-6 text-primary" />
-            <span className="font-heading text-xl font-semibold">Confluence</span>
+            <Network className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <span className="font-heading text-lg sm:text-xl font-semibold">Confluence</span>
           </motion.div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <ThemeToggle />
             <Link href="/login">
-              <Button variant="ghost" data-testid="button-login">
+              <Button variant="ghost" size="sm" className="hidden xs:inline-flex" data-testid="button-login">
                 Log In
               </Button>
             </Link>
             <Link href="/signup">
-              <Button data-testid="button-signup-header">Get Started</Button>
+              <Button size="sm" data-testid="button-signup-header">Get Started</Button>
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32 lg:py-40">
+      <section className="relative overflow-hidden py-16 sm:py-20 md:py-32 lg:py-40">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
-        <div className="container relative px-4 md:px-6">
+        <div className="mx-auto w-full max-w-7xl relative px-4 sm:px-6">
           <motion.div
-            className="mx-auto max-w-4xl text-center"
+            className="mx-auto max-w-3xl text-center"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -112,7 +112,7 @@ export default function Landing() {
 
             <motion.h1 
               variants={itemVariants}
-              className="mb-6 font-heading text-5xl font-bold md:text-6xl lg:text-7xl"
+              className="mb-6 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold"
             >
               Turn Your Network Into
               <span className="block bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
@@ -122,7 +122,7 @@ export default function Landing() {
 
             <motion.p 
               variants={itemVariants}
-              className="mb-8 text-xl text-muted-foreground md:text-2xl"
+              className="mb-8 text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground"
             >
               Find real connections at target companies. Get introduced through people who know you. 
               AI-powered contact enrichment meets human-centered networking.
@@ -157,19 +157,19 @@ export default function Landing() {
       </section>
 
       {/* Core Features Section */}
-      <section className="py-16 md:py-24">
-        <div className="container px-4 md:px-6">
+      <section className="py-12 sm:py-16 md:py-24">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <motion.div
-            className="mb-16 text-center"
+            className="mb-12 sm:mb-16 text-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="mb-4 font-heading text-4xl font-bold md:text-5xl">
+            <h2 className="mb-4 font-heading text-3xl sm:text-4xl md:text-5xl font-bold">
               How Confluence Works
             </h2>
-            <p className="text-lg text-muted-foreground md:text-xl">
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground lg:text-xl">
               Three core capabilities powered by AI and human judgment
             </p>
           </motion.div>
@@ -269,8 +269,8 @@ export default function Landing() {
       </section>
 
       {/* Value Proposition Section */}
-      <section className="border-t py-16 md:py-24 bg-muted/30">
-        <div className="container px-4 md:px-6">
+      <section className="border-t py-12 sm:py-16 md:py-24 bg-muted/30">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Left side - Text */}
             <motion.div
@@ -382,18 +382,18 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 md:py-32">
+      <section className="py-16 sm:py-20 md:py-32">
         <motion.div
-          className="container max-w-3xl px-4 text-center md:px-6"
+          className="mx-auto w-full max-w-3xl px-4 sm:px-6 text-center"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="mb-6 font-heading text-4xl font-bold md:text-5xl">
+          <h2 className="mb-6 font-heading text-3xl sm:text-4xl md:text-5xl font-bold">
             Ready to Transform Your Career Path?
           </h2>
-          <p className="mb-12 text-xl text-muted-foreground">
+          <p className="mb-12 text-base sm:text-lg md:text-xl text-muted-foreground">
             Stop submitting cold applications. Start getting introduced to people who matter.
           </p>
           <motion.div
@@ -417,7 +417,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t py-8">
         <motion.div
-          className="container px-4 text-center text-sm text-muted-foreground md:px-6"
+          className="mx-auto w-full max-w-7xl px-4 sm:px-6 text-center text-xs sm:text-sm text-muted-foreground"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.5 }}

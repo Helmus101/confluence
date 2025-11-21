@@ -119,7 +119,7 @@ export default function Login() {
 
   return (
     <motion.div 
-      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background p-4"
+      className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4 py-8 sm:py-12"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -159,7 +159,7 @@ export default function Login() {
       </motion.div>
 
       <motion.div 
-        className="w-full max-w-md relative z-10"
+        className="w-full max-w-sm sm:max-w-md relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
