@@ -572,6 +572,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Translation
+  app.post("/api/translate", async (req, res) => {
+    try {
+      const { text, targetLanguage } = req.body;
+      if (!text || !targetLanguage) {
+        return res.status(400).json({ error: "Missing text or targetLanguage" });
+      }
+
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional translator. Translate the given text to ${targetLanguage}. Respond with only the translation, nothing else.`,
+            },
+            {
+              role: "user",
+              content: text,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Translation API error: ${response.status}`);
+      }
+
+      const data = await response.json() as any;
+      const translated = data.choices[0].message.content || text;
+
+      return res.json({ translated });
+    } catch (error: any) {
+      console.error("Translation error:", error);
+      return res.status(500).json({ error: "Translation failed" });
+    }
+  });
+
   // Admin
   app.get("/api/admin/stats", async (req, res) => {
     try {

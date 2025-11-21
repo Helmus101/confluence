@@ -16,7 +16,7 @@ import { ContactDetailModal } from "@/components/contact-detail-modal";
 import { NotificationCenter } from "@/components/notification-center";
 import { useToast } from "@/hooks/use-toast";
 import type { SearchResult, Contact } from "@shared/schema";
-import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap, Download } from "lucide-react";
+import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap, MessageSquare, Globe } from "lucide-react";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -111,30 +111,38 @@ export default function Dashboard() {
     setLocation("/");
   };
 
-  const handleDownloadCode = async () => {
+  const [translatedContacts, setTranslatedContacts] = useState<Record<string, any>>({});
+
+  const handleTranslateToFrench = async (contact: any) => {
     try {
-      const response = await fetch("/api/download-project");
-      if (!response.ok) throw new Error("Download failed");
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "confluence-project.zip";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const text = `${contact.name} - ${contact.title} at ${contact.company}. Industry: ${contact.industry}. Seniority: ${contact.seniority}. ${contact.linkedinSummary || ""}`;
+      const response = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, targetLanguage: "French" }),
+      });
+      if (!response.ok) throw new Error("Translation failed");
+      const data = await response.json();
+      setTranslatedContacts({
+        ...translatedContacts,
+        [contact.id]: data.translated,
+      });
       toast({
-        title: "Success",
-        description: "Project downloaded successfully",
+        title: "Translated to French",
+        description: "Contact information translated successfully",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to download project",
+        description: "Failed to translate",
         variant: "destructive",
       });
     }
+  };
+
+  const handleAskForIntro = (contact: any) => {
+    setSelectedContact({ ...contact, matchType: "indirect" });
+    setIsModalOpen(true);
   };
 
   const getInitials = (name: string) => {
@@ -194,9 +202,6 @@ export default function Dashboard() {
               </Button>
             </Link>
             <NotificationCenter userId={user?.id} />
-            <Button variant="ghost" size="icon" onClick={handleDownloadCode} title="Download project as ZIP" data-testid="button-download">
-              <Download className="h-5 w-5" />
-            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
               <LogOut className="h-5 w-5" />
@@ -473,16 +478,15 @@ export default function Dashboard() {
                     {searchResults.indirect.map((contact) => (
                       <Card
                         key={contact.id}
-                        className="hover-elevate cursor-pointer transition-all"
-                        onClick={() => {
-                          setSelectedContact({ ...contact, matchType: "indirect" });
-                          setIsModalOpen(true);
-                        }}
+                        className="hover-elevate transition-all"
                         data-testid={`card-contact-indirect-${contact.id}`}
                       >
                         <CardHeader>
                           <div className="flex items-start justify-between gap-4">
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-3 flex-1 cursor-pointer" onClick={() => {
+                              setSelectedContact({ ...contact, matchType: "indirect" });
+                              setIsModalOpen(true);
+                            }}>
                               <Avatar>
                                 <AvatarFallback>{getInitials(contact.name || "?")}</AvatarFallback>
                               </Avatar>
@@ -514,9 +518,37 @@ export default function Dashboard() {
                               </Badge>
                             )}
                           </div>
-                          <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                          <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 mb-4">
                             Via {contact.connectorName}
                           </Badge>
+                          {translatedContacts[contact.id] && (
+                            <div className="mb-4 p-2 bg-muted rounded text-sm">
+                              <p className="font-medium text-xs mb-1">French Translation:</p>
+                              <p className="text-xs">{translatedContacts[contact.id]}</p>
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleTranslateToFrench(contact)}
+                              className="flex-1"
+                              data-testid={`button-translate-${contact.id}`}
+                            >
+                              <Globe className="mr-1 h-4 w-4" />
+                              French
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleAskForIntro(contact)}
+                              className="flex-1"
+                              data-testid={`button-ask-intro-${contact.id}`}
+                            >
+                              <MessageSquare className="mr-1 h-4 w-4" />
+                              Ask Intro
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
