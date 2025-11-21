@@ -11,11 +11,15 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { SearchResult, Contact } from "@shared/schema";
-import { Network, Search, TrendingUp, Users, LogOut, Mail } from "lucide-react";
+import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload } from "lucide-react";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
+  
+  const handleImportNetwork = () => {
+    setLocation("/onboard");
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
 
@@ -80,6 +84,10 @@ export default function Dashboard() {
             </form>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="default" size="sm" onClick={handleImportNetwork} data-testid="button-import-network">
+              <Upload className="mr-2 h-4 w-4" />
+              Import Network
+            </Button>
             <Link href="/intros">
               <Button variant="ghost" size="icon" data-testid="button-intros">
                 <Mail className="h-5 w-5" />
@@ -102,35 +110,62 @@ export default function Dashboard() {
         </div>
 
         {!activeSearch && (
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="hover-elevate">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Your Network</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="hover-elevate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Your Network</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">Total contacts</p>
+                </CardContent>
+              </Card>
+              <Card className="hover-elevate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Intro Requests</CardTitle>
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">Active requests</p>
+                </CardContent>
+              </Card>
+              <Card className="hover-elevate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">--</div>
+                  <p className="text-xs text-muted-foreground">Completed intros</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Card className="border-2 border-dashed hover-elevate">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Import Your LinkedIn Network</CardTitle>
+                    <CardDescription className="mt-1">
+                      Upload your LinkedIn contacts CSV and let AI enrich them with detailed information
+                    </CardDescription>
+                  </div>
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">Total contacts</p>
-              </CardContent>
-            </Card>
-            <Card className="hover-elevate">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Intro Requests</CardTitle>
-                <Mail className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">Active requests</p>
-              </CardContent>
-            </Card>
-            <Card className="hover-elevate">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">--</div>
-                <p className="text-xs text-muted-foreground">Completed intros</p>
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Our AI will automatically extract company, industry, role, and seniority from your contacts.
+                  </p>
+                  <Button onClick={handleImportNetwork} className="w-full" data-testid="button-import-card">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Start Importing
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
