@@ -380,6 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "intro_request",
         title: "New Intro Request",
         message: `${requester?.name || "Someone"} is requesting an intro to ${contact?.name || data.targetCompany}`,
+        read: false,
         relatedId: request.id,
       });
 
@@ -433,6 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "intro_response",
         title: `Request ${actionText}!`,
         message: `${connector?.name || "A connector"} has ${actionText} your intro request`,
+        read: false,
         relatedId: requestId,
       });
 
