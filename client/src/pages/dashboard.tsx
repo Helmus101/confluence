@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,20 +12,26 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ContactDetailModal } from "@/components/contact-detail-modal";
+import { useToast } from "@/hooks/use-toast";
 import type { SearchResult, Contact } from "@shared/schema";
-import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye } from "lucide-react";
+import { Network, Search, TrendingUp, Users, LogOut, Mail, Upload, Sparkles, Eye, Zap } from "lucide-react";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  
+  const [selectedContact, setSelectedContact] = useState<(Contact & { connectorName?: string; matchType?: string }) | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   
   const handleImportNetwork = () => {
     setLocation("/onboard");
   };
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeSearch, setActiveSearch] = useState("");
 
-  const { data: contactsData } = useQuery({
+  const { data: contactsData, refetch: refetchContacts } = useQuery({
     queryKey: ["/api/contacts", user?.id],
     queryFn: async () => {
       const response = await fetch(`/api/contacts?userId=${user?.id}`);
@@ -35,6 +41,32 @@ export default function Dashboard() {
     enabled: !!user,
     staleTime: 0,
     gcTime: 0,
+  });
+
+  const enrichMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/contacts/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id }),
+      });
+      if (!response.ok) throw new Error("Enrichment failed");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: `Enriched ${data.enriched} contacts with AI analysis`,
+      });
+      refetchContacts();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to enrich contacts. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const [searchProgress, setSearchProgress] = useState(0);
@@ -156,14 +188,32 @@ export default function Dashboard() {
         </motion.div>
 
         {!activeSearch && (
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+            >
+              <Button
+                onClick={() => enrichMutation.mutate()}
+                disabled={enrichMutation.isPending}
+                variant="outline"
+                size="sm"
+                data-testid="button-enrich-all"
+              >
+                <Zap className="mr-2 h-4 w-4" />
+                {enrichMutation.isPending ? "Enriching..." : "Enrich All Contacts"}
+              </Button>
+            </motion.div>
+
             <motion.div 
-              className="grid gap-4 md:grid-cols-3"
+              className="space-y-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <motion.div 
+                className="grid gap-4 md:grid-cols-3"
               variants={{
                 hidden: { opacity: 0 },
                 visible: {
@@ -328,7 +378,15 @@ export default function Dashboard() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   {searchResults.direct.map((contact) => (
-                    <Card key={contact.id} className="hover-elevate" data-testid={`card-contact-${contact.id}`}>
+                    <Card
+                      key={contact.id}
+                      className="hover-elevate cursor-pointer transition-all"
+                      onClick={() => {
+                        setSelectedContact({ ...contact, matchType: "direct" });
+                        setIsModalOpen(true);
+                      }}
+                      data-testid={`card-contact-${contact.id}`}
+                    >
                       <CardHeader>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3">
@@ -381,7 +439,15 @@ export default function Dashboard() {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     {searchResults.indirect.map((contact) => (
-                      <Card key={contact.id} className="hover-elevate" data-testid={`card-contact-indirect-${contact.id}`}>
+                      <Card
+                        key={contact.id}
+                        className="hover-elevate cursor-pointer transition-all"
+                        onClick={() => {
+                          setSelectedContact({ ...contact, matchType: "indirect" });
+                          setIsModalOpen(true);
+                        }}
+                        data-testid={`card-contact-indirect-${contact.id}`}
+                      >
                         <CardHeader>
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex items-start gap-3">
@@ -438,9 +504,12 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             )}
+            </motion.div>
           </div>
         )}
       </main>
+
+      <ContactDetailModal contact={selectedContact} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
