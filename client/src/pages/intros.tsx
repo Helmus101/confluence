@@ -148,11 +148,11 @@ export default function Intros() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="sent" data-testid="tab-sent">
               <Mail className="mr-2 h-4 w-4" />
-              Requests Sent
+              {t("requests-sent")}
             </TabsTrigger>
             <TabsTrigger value="received" data-testid="tab-received">
               <Mail className="mr-2 h-4 w-4" />
-              Requests Received
+              {t("requests-received")}
             </TabsTrigger>
           </TabsList>
 
@@ -190,14 +190,14 @@ export default function Intros() {
                       {request.status === "accepted" && (
                         <div className="rounded-md border border-green-500/20 bg-green-500/5 p-3">
                           <p className="text-sm text-green-700 dark:text-green-400">
-                            The connector has accepted! They will be in touch soon.
+                            {t("connector-accepted")}
                           </p>
                         </div>
                       )}
                       {request.status === "declined" && (
                         <div className="rounded-md border border-red-500/20 bg-red-500/5 p-3">
                           <p className="text-sm text-red-700 dark:text-red-400">
-                            This request was declined. Consider reaching out to other connections.
+                            {t("declined-intro")}
                           </p>
                         </div>
                       )}
@@ -209,12 +209,12 @@ export default function Intros() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <Mail className="mb-4 h-12 w-12 text-muted-foreground" />
-                  <h3 className="mb-2 font-heading text-lg font-medium">No requests sent yet</h3>
+                  <h3 className="mb-2 font-heading text-lg font-medium">{t("no-requests-sent")}</h3>
                   <p className="mb-4 text-center text-sm text-muted-foreground">
-                    Search for opportunities on the dashboard to request introductions
+                    {t("search-opportunities")}
                   </p>
                   <Link href="/dashboard">
-                    <Button data-testid="button-go-dashboard">Go to Dashboard</Button>
+                    <Button data-testid="button-go-dashboard">{t("go-dashboard")}</Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -272,7 +272,7 @@ export default function Intros() {
                             data-testid={`button-accept-${request.id}`}
                           >
                             <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Accept
+                            {t("accept")}
                           </Button>
                           <Button
                             variant="outline"
@@ -282,7 +282,7 @@ export default function Intros() {
                             data-testid={`button-decline-${request.id}`}
                           >
                             <XCircle className="mr-2 h-4 w-4" />
-                            Decline
+                            {t("decline")}
                           </Button>
                         </div>
                       )}

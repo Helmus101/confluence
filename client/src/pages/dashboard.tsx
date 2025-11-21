@@ -518,7 +518,7 @@ export default function Dashboard() {
                             data-testid={`button-ask-intro-${contact.id}`}
                           >
                             <MessageSquare className="mr-1 h-4 w-4" />
-                            Ask Intro
+                            {t("ask-intro")}
                           </Button>
                         </CardContent>
                       </Card>
@@ -532,9 +532,9 @@ export default function Dashboard() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-                  <h3 className="mb-2 font-heading text-lg font-medium">No matches found</h3>
+                  <h3 className="mb-2 font-heading text-lg font-medium">{t("no-matches")}</h3>
                   <p className="text-center text-sm text-muted-foreground">
-                    Try a different search term or add more contacts to expand your network
+                    {t("no-matches-desc")}
                   </p>
                 </CardContent>
               </Card>
