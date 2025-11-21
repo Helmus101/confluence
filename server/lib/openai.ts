@@ -23,20 +23,20 @@ function extractJSON(text: string): Record<string, any> {
 
 export async function enrichContact(rawText: string): Promise<EnrichedData> {
   try {
-    const prompt = `You are a structured data extractor. Input: a single raw contact string or CSV row from a user (could be partial). Output: a single valid JSON object with fields: name, company, title, industry, seniority (e.g. intern/junior/mid/senior/manager), location (city/country if available), confidence (0.0-1.0). If not available, set field to null. Keep values concise.
+    const prompt = `You are a detailed contact enrichment expert. Extract comprehensive structured data from the input. Output ONLY a valid JSON object with these fields (set to null if unavailable): name, email, phone, company, title, industry, seniority (intern/junior/mid/senior/manager/director), location, companySize (startup/small/medium/large/enterprise), fundingStage (bootstrapped/seed/series-a/series-b/public), yearsExperience (number), skills (array of strings), education, university, degree (BS/BA/MS/MBA/PhD), major, graduationYear (number), recentRoleChange (boolean), industryFit (string describing relevance), confidence (0.0-1.0).
 
-Example input: "Maya P., Adidas, Product Intern 2023"
+Example input: "Sarah Chen, sarah@techcorp.com, TechCorp, Senior Product Manager, Stanford BS CS 2016, 7 years fintech"
 Example output:
-{"name":"Maya P.", "company":"Adidas", "title":"Product Intern", "industry":"Sports/Retail", "seniority":"intern", "location":null, "confidence":0.87}
+{"name":"Sarah Chen","email":"sarah@techcorp.com","phone":null,"company":"TechCorp","title":"Senior Product Manager","industry":"fintech","seniority":"senior","location":null,"companySize":"large","fundingStage":"series-b","yearsExperience":7,"skills":["product management","fintech","leadership"],"education":"Stanford","university":"Stanford","degree":"BS","major":"Computer Science","graduationYear":2016,"recentRoleChange":false,"industryFit":"Strong fintech background and PM expertise","confidence":0.92}
 
-Now process this input: ${rawText}`;
+Now extract detailed data from: ${rawText}`;
 
     const response = await client.chat.completions.create({
       model: "deepseek-chat",
       messages: [
         {
           role: "system",
-          content: "You are a data extraction expert. Always respond with valid JSON only.",
+          content: "You are a detailed data extraction expert. Always respond with valid JSON only. Extract all available information comprehensively.",
         },
         {
           role: "user",
@@ -49,22 +49,48 @@ Now process this input: ${rawText}`;
     
     return {
       name: result.name || null,
+      email: result.email || null,
+      phone: result.phone || null,
       company: result.company || null,
       title: result.title || null,
       industry: result.industry || null,
       seniority: result.seniority || null,
       location: result.location || null,
+      companySize: result.companySize || null,
+      fundingStage: result.fundingStage || null,
+      yearsExperience: result.yearsExperience || null,
+      skills: result.skills || null,
+      education: result.education || null,
+      university: result.university || null,
+      degree: result.degree || null,
+      major: result.major || null,
+      graduationYear: result.graduationYear || null,
+      recentRoleChange: result.recentRoleChange || null,
+      industryFit: result.industryFit || null,
       confidence: Math.round((result.confidence || 0.5) * 100),
     };
   } catch (error) {
     console.error("Error enriching contact:", error);
     return {
       name: null,
+      email: null,
+      phone: null,
       company: null,
       title: null,
       industry: null,
       seniority: null,
       location: null,
+      companySize: null,
+      fundingStage: null,
+      yearsExperience: null,
+      skills: null,
+      education: null,
+      university: null,
+      degree: null,
+      major: null,
+      graduationYear: null,
+      recentRoleChange: null,
+      industryFit: null,
       confidence: 0,
     };
   }
