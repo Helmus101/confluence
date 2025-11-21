@@ -262,40 +262,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         seenCompaniesMap.get(normalized)!.push(contact);
       }
 
+      // Collect all individual contacts for curation
+      const allIndirectContacts: Array<typeof allOtherContacts[0] & { connectorName: string; connectorId: string; connectorStats: { successCount: number; responseRate: number }; matchType: "indirect" }> = [];
+      
       const seenCompaniesEntries = Array.from(seenCompaniesMap.entries());
       for (const entry of seenCompaniesEntries) {
         const normalized = entry[0];
         const contacts = entry[1];
-        const contact = contacts[0];
-        const connectorId = contact.userId;
-        const connector = await storage.getUser(connectorId);
-        if (!connector) continue;
-
-        const stats = await storage.getConnectorStats(connectorId);
         
-        indirectMatches.push({
-          company: contact.company || "",
-          companyNormalized: normalized,
-          connectorId,
-          connectorName: connector.name.split(" ")[0],
-          contacts: contacts.map((c) => ({
-            id: c.id,
-            name: c.name,
-            title: c.title,
-            linkedinSummary: c.linkedinSummary,
-          })),
-          connectorStats: {
-            successCount: stats?.successCount || 0,
-            responseRate: stats?.responseRate || 0,
-          },
-          confidence: contact.confidence || 50,
-          matchType: "indirect",
-        });
+        for (const contact of contacts) {
+          const connectorId = contact.userId;
+          const connector = await storage.getUser(connectorId);
+          if (!connector) continue;
+
+          const stats = await storage.getConnectorStats(connectorId);
+          
+          allIndirectContacts.push({
+            ...contact,
+            connectorName: connector.name.split(" ")[0],
+            connectorId,
+            connectorStats: {
+              successCount: stats?.successCount || 0,
+              responseRate: stats?.responseRate || 0,
+            },
+            matchType: "indirect",
+          });
+        }
       }
+
+      // Sort by confidence and connector stats, then take top 20
+      const curatedIndirect = allIndirectContacts
+        .sort((a, b) => {
+          const confDiff = (b.confidence || 0) - (a.confidence || 0);
+          if (confDiff !== 0) return confDiff;
+          const statsDiff = (b.connectorStats.successCount + b.connectorStats.responseRate) - (a.connectorStats.successCount + a.connectorStats.responseRate);
+          return statsDiff;
+        })
+        .slice(0, 20)
+        .map((c) => ({ ...c, matchType: "indirect" as const }));
 
       const result: SearchResult = {
         direct: directMatches.map((c) => ({ ...c, matchType: "direct" as const })),
-        indirect: indirectMatches,
+        indirect: curatedIndirect,
       };
 
       return res.json(result);

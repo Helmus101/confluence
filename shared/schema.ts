@@ -157,23 +157,14 @@ export interface EnrichedData {
 
 export interface SearchResult {
   direct: Array<Contact & { matchType: "direct" }>;
-  indirect: Array<{
-    company: string;
-    companyNormalized: string;
-    connectorId: string;
+  indirect: Array<Contact & { 
     connectorName: string;
-    contacts: Array<{
-      id: string;
-      name: string | null;
-      title: string | null;
-      linkedinSummary: string | null;
-    }>;
+    connectorId: string;
     connectorStats: {
       successCount: number;
       responseRate: number;
     };
-    confidence: number;
-    matchType: "indirect";
+    matchType: "indirect" 
   }>;
 }
 

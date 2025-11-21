@@ -380,49 +380,45 @@ export default function Dashboard() {
                     <Badge variant="secondary">{searchResults.indirect.length}</Badge>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
-                    {searchResults.indirect.map((match, idx) => (
-                      <Card key={idx} className="hover-elevate" data-testid={`card-indirect-${idx}`}>
+                    {searchResults.indirect.map((contact) => (
+                      <Card key={contact.id} className="hover-elevate" data-testid={`card-contact-indirect-${contact.id}`}>
                         <CardHeader>
                           <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <CardTitle className="text-base">{match.company}</CardTitle>
-                              <CardDescription className="line-clamp-2">
-                                {match.contacts.length > 0 && match.contacts[0].name ? `Via ${match.contacts[0].name}` : `Available via ${match.connectorName}`}
-                              </CardDescription>
-                            </div>
-                            {getConfidenceBadge(match.confidence)}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {match.contacts.length > 0 && (
-                            <div className="space-y-2">
-                              <p className="text-xs font-semibold text-muted-foreground">Contacts at {match.company}:</p>
-                              <div className="space-y-1">
-                                {match.contacts.slice(0, 2).map((contact, cidx) => (
-                                  <div key={cidx} className="text-sm">
-                                    <p className="font-medium">{contact.name || "Unknown"}</p>
-                                    {contact.title && <p className="text-xs text-muted-foreground">{contact.title}</p>}
-                                  </div>
-                                ))}
-                                {match.contacts.length > 2 && (
-                                  <p className="text-xs text-muted-foreground">+{match.contacts.length - 2} more</p>
-                                )}
+                            <div className="flex items-start gap-3">
+                              <Avatar>
+                                <AvatarFallback>{getInitials(contact.name || "?")}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <CardTitle className="text-base">{contact.name}</CardTitle>
+                                <CardDescription>
+                                  {contact.title} {contact.company && `at ${contact.company}`}
+                                </CardDescription>
                               </div>
                             </div>
-                          )}
-                          <p className="text-sm text-muted-foreground">
-                            {match.connectorName} from your network can introduce you.
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <div className="text-xs text-muted-foreground">
-                              Score: {match.connectorStats.successCount} successful • {match.connectorStats.responseRate}% response
-                            </div>
+                            {contact.confidence && getConfidenceBadge(contact.confidence)}
                           </div>
-                          <Link href={`/request-intro?connector=${match.connectorId}&company=${match.company}`}>
-                            <Button className="w-full" data-testid={`button-request-intro-${idx}`}>
-                              Request Introduction
-                            </Button>
-                          </Link>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="mb-4 flex flex-wrap gap-2">
+                            {contact.industry && (
+                              <Badge variant="secondary" className="text-xs">
+                                {contact.industry}
+                              </Badge>
+                            )}
+                            {contact.seniority && (
+                              <Badge variant="secondary" className="text-xs">
+                                {contact.seniority}
+                              </Badge>
+                            )}
+                            {contact.location && (
+                              <Badge variant="secondary" className="text-xs">
+                                {contact.location}
+                              </Badge>
+                            )}
+                          </div>
+                          <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                            Via {contact.connectorName}
+                          </Badge>
                         </CardContent>
                       </Card>
                     ))}
