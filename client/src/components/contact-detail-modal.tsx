@@ -103,7 +103,7 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start gap-4">
             <Avatar className="h-16 w-16">
