@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, loginUserSchema, insertContactSchema, insertIntroRequestSchema } from "@shared/schema";
 import type { SearchResult } from "@shared/schema";
-import { enrichContact, generateUserToConnectorMessage, generateConnectorToTargetMessage } from "./lib/openai";
+import { enrichContact, generateUserToConnectorMessage, generateConnectorToTargetMessage, analyzeSearchQuery } from "./lib/openai";
 import { normalizeCompanyName, getStartOfWeek } from "./lib/utils";
 import Papa from "papaparse";
 import multer from "multer";
@@ -174,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search
+  // Search with AI analysis
   app.get("/api/search", async (req, res) => {
     try {
       const userId = (req.query.userId as string) || (req as any).userId;
@@ -183,20 +183,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const query = (req.query.q as string) || "";
-      const searchLower = query.toLowerCase();
+      if (!query.trim()) {
+        return res.json({ direct: [], indirect: [] });
+      }
 
       const userContacts = await storage.getUserContacts(userId);
+      if (userContacts.length === 0) {
+        return res.json({ direct: [], indirect: [] });
+      }
 
-      // Find direct matches
+      // Use AI to analyze the search query
+      const searchIntent = await analyzeSearchQuery(query);
+
+      // Find direct matches using AI-analyzed intent
       const directMatches = userContacts.filter((contact) => {
         if (!contact.enriched) return false;
         
-        const matchCompany = contact.company?.toLowerCase().includes(searchLower);
-        const matchIndustry = contact.industry?.toLowerCase().includes(searchLower);
-        const matchTitle = contact.title?.toLowerCase().includes(searchLower);
-        const matchSeniority = contact.seniority?.toLowerCase().includes(searchLower);
+        let matches = false;
         
-        return matchCompany || matchIndustry || matchTitle || matchSeniority;
+        if (searchIntent.company && contact.company?.toLowerCase().includes(searchIntent.company.toLowerCase())) {
+          matches = true;
+        }
+        if (searchIntent.industry && contact.industry?.toLowerCase().includes(searchIntent.industry.toLowerCase())) {
+          matches = true;
+        }
+        if (searchIntent.role && (contact.title?.toLowerCase().includes(searchIntent.role.toLowerCase()) || contact.title?.toLowerCase().includes(searchIntent.role.toLowerCase()))) {
+          matches = true;
+        }
+        if (searchIntent.seniority && contact.seniority?.toLowerCase().includes(searchIntent.seniority.toLowerCase())) {
+          matches = true;
+        }
+        if (searchIntent.location && contact.location?.toLowerCase().includes(searchIntent.location.toLowerCase())) {
+          matches = true;
+        }
+        
+        return matches;
       });
 
       // Find indirect matches
@@ -208,6 +229,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const normalized = normalizeCompanyName(contact.company);
         if (seenCompanies.has(normalized)) continue;
+        
+        // Check if company matches search intent
+        const companyMatches = !searchIntent.company || contact.company.toLowerCase().includes(searchIntent.company.toLowerCase());
+        if (!companyMatches) continue;
         
         const othersContacts = await storage.getContactsByCompany(normalized, userId);
         

@@ -70,7 +70,7 @@ export default function Dashboard() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by company, industry, or role — e.g., 'fintech intern Paris'"
+                  placeholder="Search with AI — 'fintech interns in NYC', 'product managers at Google', etc."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"

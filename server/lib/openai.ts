@@ -116,6 +116,43 @@ Reason/goal: ${params.reason}`;
   }
 }
 
+export async function analyzeSearchQuery(query: string): Promise<{ company?: string; industry?: string; role?: string; seniority?: string; location?: string }> {
+  try {
+    const prompt = `Parse this search query and extract the user's intent. They're looking for people in their network. Return a JSON object with fields: company (specific company name if mentioned), industry (industry name if mentioned), role (job title/role if mentioned), seniority (career level: intern/junior/mid/senior), location (city/country if mentioned). If not mentioned, set to null.
+
+Search query: "${query}"
+
+Example: "fintech intern in Paris" -> {"company":null,"industry":"fintech","role":null,"seniority":"intern","location":"Paris"}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are a search query analyzer. Respond with valid JSON only.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    return {
+      company: result.company || undefined,
+      industry: result.industry || undefined,
+      role: result.role || undefined,
+      seniority: result.seniority || undefined,
+      location: result.location || undefined,
+    };
+  } catch (error) {
+    console.error("Error analyzing search query:", error);
+    return {};
+  }
+}
+
 export async function generateConnectorToTargetMessage(params: {
   connectorName: string;
   requesterName: string;

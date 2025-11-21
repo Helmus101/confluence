@@ -27,10 +27,10 @@ export default function Onboard() {
     resolver: zodResolver(insertContactSchema),
     defaultValues: {
       rawText: "",
-      name: "",
-      company: "",
-      title: "",
-      linkedinUrl: "",
+      name: undefined,
+      company: undefined,
+      title: undefined,
+      linkedinUrl: undefined,
     },
   });
 
@@ -220,7 +220,7 @@ export default function Onboard() {
                           <FormItem>
                             <FormLabel>Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="John Doe" data-testid="input-contact-name" {...field} />
+                              <Input placeholder="John Doe" data-testid="input-contact-name" {...field} value={field.value ?? ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -233,7 +233,7 @@ export default function Onboard() {
                           <FormItem>
                             <FormLabel>Company (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Google" data-testid="input-contact-company" {...field} />
+                              <Input placeholder="Google" data-testid="input-contact-company" {...field} value={field.value ?? ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -246,7 +246,7 @@ export default function Onboard() {
                           <FormItem>
                             <FormLabel>Title (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Software Engineer" data-testid="input-contact-title" {...field} />
+                              <Input placeholder="Software Engineer" data-testid="input-contact-title" {...field} value={field.value ?? ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
