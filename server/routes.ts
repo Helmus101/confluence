@@ -9,6 +9,7 @@ import Papa from "papaparse";
 import multer from "multer";
 import { promises as fs } from "fs";
 import { join } from "path";
+import archiver from "archiver";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -479,8 +480,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Download project as ZIP
   app.get("/api/download-project", async (req, res) => {
     try {
-      const archiver = require("archiver");
-      
       const archive = archiver("zip", { zlib: { level: 9 } });
       
       res.setHeader("Content-Type", "application/zip");
