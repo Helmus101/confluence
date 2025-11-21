@@ -8,12 +8,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Network, LogOut, ArrowLeft, BarChart3, Search } from "lucide-react";
+import { useTranslation } from "@/lib/translation-context";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import type { Contact } from "@shared/schema";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
 export default function NetworkVisualization() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
 

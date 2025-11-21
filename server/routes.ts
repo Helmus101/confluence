@@ -478,7 +478,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const requests = await storage.getUserSentRequests(userId);
-      return res.json(requests);
+      const enriched = await Promise.all(
+        requests.map(async (req: any) => {
+          const contact = req.contactId ? await storage.getContact(req.contactId) : null;
+          const requester = await storage.getUser(req.requesterId);
+          return {
+            ...req,
+            contactName: contact?.name,
+            contactLinkedin: contact?.linkedinUrl,
+            askerLinkedin: requester?.linkedinUrl,
+          };
+        })
+      );
+      return res.json(enriched);
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
@@ -492,7 +504,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const requests = await storage.getUserReceivedRequests(userId);
-      return res.json(requests);
+      const enriched = await Promise.all(
+        requests.map(async (req: any) => {
+          const contact = req.contactId ? await storage.getContact(req.contactId) : null;
+          const requester = await storage.getUser(req.requesterId);
+          return {
+            ...req,
+            contactName: contact?.name,
+            contactLinkedin: contact?.linkedinUrl,
+            askerLinkedin: requester?.linkedinUrl,
+          };
+        })
+      );
+      return res.json(enriched);
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }

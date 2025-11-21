@@ -11,8 +11,10 @@ import { useAuth } from "@/lib/auth-context";
 import { insertIntroRequestSchema, type InsertIntroRequest } from "@shared/schema";
 import { ArrowLeft, Send } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "@/lib/translation-context";
 
 export default function RequestIntro() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();

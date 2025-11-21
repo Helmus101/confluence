@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/translation-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Users, Mail, TrendingUp, Clock } from "lucide-react";
@@ -15,6 +16,7 @@ interface AdminStats {
 }
 
 export default function Admin() {
+  const { t } = useTranslation();
   const { data: stats, isLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
   });

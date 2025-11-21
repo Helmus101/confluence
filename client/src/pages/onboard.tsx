@@ -15,8 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { insertContactSchema, type InsertContact } from "@shared/schema";
 import { Upload, UserPlus, Sparkles, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "@/lib/translation-context";
 
 export default function Onboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
