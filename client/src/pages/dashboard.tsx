@@ -207,9 +207,9 @@ export default function Dashboard() {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <h1 className="mb-2 font-heading text-3xl font-semibold">
-            Welcome back, {user?.name?.split(" ")[0]}
+            {t("search-greeting", { name: user?.name?.split(" ")[0] || "" })}
           </h1>
-          <p className="text-muted-foreground">Search your network to find warm introduction opportunities</p>
+          <p className="text-muted-foreground">{t("search-desc")}</p>
         </motion.div>
 
         {!activeSearch && (
@@ -227,7 +227,7 @@ export default function Dashboard() {
                 data-testid="button-enrich-all"
               >
                 <Zap className="mr-2 h-4 w-4" />
-                {enrichMutation.isPending ? "Enriching..." : "Enrich All Contacts"}
+                {enrichMutation.isPending ? t("enriching") : t("enrich-contacts")}
               </Button>
             </motion.div>
 
@@ -265,7 +265,7 @@ export default function Dashboard() {
                     transition={{ duration: 0.3 }}
                   />
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                    <CardTitle className="text-sm font-medium">Your Network</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t("your-network")}</CardTitle>
                     <motion.div
                       animate={{ rotate: [0, 360] }}
                       transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
@@ -284,7 +284,7 @@ export default function Dashboard() {
                     >
                       {contactsData?.contacts?.length || 0}
                     </motion.div>
-                    <p className="text-xs text-muted-foreground">Total contacts</p>
+                    <p className="text-xs text-muted-foreground">{t("total-contacts")}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -303,7 +303,7 @@ export default function Dashboard() {
                     transition={{ duration: 0.3 }}
                   />
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                    <CardTitle className="text-sm font-medium">Intro Requests</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t("introduction-requests")}</CardTitle>
                     <motion.div
                       animate={{ y: [0, -8, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
@@ -313,7 +313,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent className="relative">
                     <div className="text-2xl font-bold">0</div>
-                    <p className="text-xs text-muted-foreground">Active requests</p>
+                    <p className="text-xs text-muted-foreground">{t("active-requests")}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -354,7 +354,7 @@ export default function Dashboard() {
                   <div>
                     <CardTitle>Import Your LinkedIn Network</CardTitle>
                     <CardDescription className="mt-1">
-                      Upload your LinkedIn contacts CSV and let AI enrich them with detailed information
+                      {t("upload-csv")}
                     </CardDescription>
                   </div>
                   <Upload className="h-8 w-8 text-muted-foreground" />
@@ -399,7 +399,7 @@ export default function Dashboard() {
             {searchResults.direct && searchResults.direct.length > 0 && (
               <div>
                 <div className="mb-4 flex items-center gap-2">
-                  <h2 className="font-heading text-2xl font-semibold">Direct Matches</h2>
+                  <h2 className="font-heading text-2xl font-semibold">{t("direct-matches")}</h2>
                   <Badge variant="secondary">{searchResults.direct.length}</Badge>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -460,7 +460,7 @@ export default function Dashboard() {
                 {searchResults.direct && searchResults.direct.length > 0 && <Separator className="my-8" />}
                 <div>
                   <div className="mb-4 flex items-center gap-2">
-                    <h2 className="font-heading text-2xl font-semibold">Indirect Opportunities</h2>
+                    <h2 className="font-heading text-2xl font-semibold">{t("indirect-opportunities")}</h2>
                     <Badge variant="secondary">{searchResults.indirect.length}</Badge>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
