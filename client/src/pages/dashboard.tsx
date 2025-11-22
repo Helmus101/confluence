@@ -139,8 +139,8 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-6">
+      <header className="sticky top-0 z-50 w-full border-b/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 shadow-sm">
+        <div className="flex h-16 items-center justify-between gap-3 px-4 md:px-8">
           <Link href="/dashboard">
             <div className="flex items-center gap-2 cursor-pointer">
               <Network className="h-6 w-6 text-primary" />
@@ -162,37 +162,46 @@ export default function Dashboard() {
               </div>
             </form>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 ml-4">
+            {contactsData?.contacts && contactsData.contacts.length > 0 && (
+              <Button 
+                variant={contactsData.contacts.some((c: any) => !c.enriched) ? "outline" : "ghost"}
+                size="sm" 
+                onClick={() => enrichMutation.mutate()}
+                disabled={enrichMutation.isPending || !contactsData.contacts.some((c: any) => !c.enriched)}
+                data-testid="button-enrich-status"
+                className={contactsData.contacts.some((c: any) => !c.enriched) ? "border-amber-500/50 text-amber-700 dark:text-amber-400" : ""}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                <span className="text-xs">{contactsData.contacts.filter((c: any) => c.enriched).length}/{contactsData.contacts.length} enriched</span>
+              </Button>
+            )}
             <Link href="/network">
-              <Button variant="ghost" size="sm" data-testid="button-network-viz">
-                <Eye className="mr-2 h-4 w-4" />
-                Visualize
+              <Button variant="ghost" size="icon" data-testid="button-network-viz" className="hover-elevate">
+                <Eye className="h-5 w-5" />
               </Button>
             </Link>
-            <Button variant="default" size="sm" onClick={handleImportNetwork} data-testid="button-import-network">
-              <Upload className="mr-2 h-4 w-4" />
-              Import
-            </Button>
             <Link href="/intros">
-              <Button variant="ghost" size="icon" data-testid="button-intros">
+              <Button variant="ghost" size="icon" data-testid="button-intros" className="hover-elevate">
                 <Mail className="h-5 w-5" />
               </Button>
             </Link>
             <NotificationCenter userId={user?.id} />
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon" 
               onClick={() => {
                 const newLang = language === 'fr' ? 'en' : 'fr';
                 localStorage.setItem("language", newLang);
                 window.location.reload();
               }}
               data-testid="button-language-toggle"
+              className="hover-elevate text-sm"
             >
-              {language === 'fr' ? '🇬🇧' : '🇫🇷'}
+              {language === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR'}
             </Button>
             <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout">
+            <Button variant="ghost" size="icon" onClick={handleLogout} data-testid="button-logout" className="hover-elevate">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
