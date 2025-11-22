@@ -34,7 +34,7 @@ const translations: Record<string, Record<string, string>> = {
     "open-linkedin": "Open",
     // Intro Form
     "request-intro": "Request Introduction",
-    "prefilled-message": "Hi {{connector}}, Confluence showed me you know {{name}}. Would you be willing to make a short intro?",
+    "prefilled-message": "Hi {{connector}}, Confluence showed me you know {{name}}. Would you be willing to make a short intro? You can reach me at {{email}}.",
     "edit-message": "Edit your message:",
     "essay-label": "Tell us about yourself and why you want this introduction (minimum 100 words):",
     "essay-placeholder": "Share your background, goals, and why this introduction would be valuable for you...",
@@ -116,7 +116,7 @@ const translations: Record<string, Record<string, string>> = {
     "open-linkedin": "Ouvrir",
     // Intro Form
     "request-intro": "Demander une introduction",
-    "prefilled-message": "Bonjour {{connector}}, Confluence m'a montré que vous connaissez {{name}}. Seriez-vous disposé à faire une courte introduction ?",
+    "prefilled-message": "Bonjour {{connector}}, Confluence m'a montré que vous connaissez {{name}}. Seriez-vous disposé à faire une courte introduction ? Vous pouvez me joindre à {{email}}.",
     "edit-message": "Modifiez votre message :",
     "essay-label": "Parlez-nous de vous et de pourquoi vous voulez cette introduction (minimum 100 mots) :",
     "essay-placeholder": "Partagez votre formation, vos objectifs et pourquoi cette introduction serait précieuse pour vous...",

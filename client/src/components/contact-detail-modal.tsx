@@ -89,10 +89,11 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
   };
 
   const initializeIntroForm = () => {
-    if (contact?.connectorName && contact?.name) {
+    if (contact?.connectorName && contact?.name && user?.email) {
       const prefilledMessage = t("prefilled-message", {
         name: contact.name,
         connector: contact.connectorName,
+        email: user.email,
       });
       setMessage(prefilledMessage);
       setShowIntroForm(true);
