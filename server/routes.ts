@@ -518,6 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             contactName: contact?.name,
             contactLinkedin: contact?.linkedinUrl,
             askerLinkedin: requester?.linkedinUrl,
+            requesterEmail: requester?.email,
           };
         })
       );

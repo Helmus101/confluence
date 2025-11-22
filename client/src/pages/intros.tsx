@@ -19,9 +19,6 @@ export default function Intros() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [statusUpdates, setStatusUpdates] = useState<Record<string, string>>({});
-  const [acceptedMessages, setAcceptedMessages] = useState<Record<string, { message: string; email: string }>>({});
-  const [requesterInfo, setRequesterInfo] = useState<Record<string, any>>({});
 
   const { data: sentRequests, isLoading: loadingSent } = useQuery<IntroRequest[]>({
     queryKey: ["/api/intro/sent", user?.id],
@@ -236,19 +233,29 @@ export default function Intros() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <CardTitle className="text-base">Intro request to {(request as any).contactName || request.targetCompany}</CardTitle>
-                          <CardDescription>
-                            Received {format(new Date(request.createdAt), "MMM d, yyyy")}
+                          <CardDescription className="space-y-1">
+                            <div>Received {format(new Date(request.createdAt), "MMM d, yyyy")}</div>
+                            {(request as any).requesterEmail && (
+                              <div className="text-xs">
+                                <span className="text-muted-foreground">Requester: </span>
+                                <a href={`mailto:${(request as any).requesterEmail}`} className="font-mono text-primary hover:underline">
+                                  {(request as any).requesterEmail}
+                                </a>
+                              </div>
+                            )}
                           </CardDescription>
-                          {(request as any).contactLinkedin && (
-                            <a href={(request as any).contactLinkedin} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline">
-                              Contact LinkedIn <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
-                          {(request as any).askerLinkedin && (
-                            <a href={(request as any).askerLinkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
-                              Requester LinkedIn <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
+                          <div className="mt-2 flex gap-2">
+                            {(request as any).contactLinkedin && (
+                              <a href={(request as any).contactLinkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                                Contact LinkedIn <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                            {(request as any).askerLinkedin && (
+                              <a href={(request as any).askerLinkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                                Requester LinkedIn <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
                         </div>
                         {getStatusBadge(request.status)}
                       </div>
@@ -290,47 +297,9 @@ export default function Intros() {
                       {request.status === "accepted" && (
                         <div className="space-y-3">
                           <div className="rounded-md border border-green-500/20 bg-green-500/5 p-3">
-                            <p className="text-sm text-green-700 dark:text-green-400">
-                              You've accepted this request. Make the intro when ready!
+                            <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                              ✓ You've accepted this request. You can now reach out to the requester or contact person to make the intro.
                             </p>
-                          </div>
-                          {acceptedMessages[request.id] && (
-                            <div className="space-y-2 rounded-md border border-blue-500/20 bg-blue-500/5 p-3">
-                              <div>
-                                <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-2">Suggested intro message template:</p>
-                                <p className="text-sm whitespace-pre-wrap text-foreground">{acceptedMessages[request.id].message}</p>
-                              </div>
-                              <div className="pt-2 border-t border-blue-500/20">
-                                <p className="text-xs text-muted-foreground mb-1">Requester email (so they can contact you directly):</p>
-                                <p className="text-sm font-mono bg-background p-2 rounded border">{acceptedMessages[request.id].email}</p>
-                              </div>
-                            </div>
-                          )}
-                          <div className="grid grid-cols-3 gap-2">
-                            <Button
-                              variant={statusUpdates[request.id] === "awaiting" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setStatusUpdates({ ...statusUpdates, [request.id]: "awaiting" })}
-                              data-testid={`button-status-awaiting-${request.id}`}
-                            >
-                              Awaiting
-                            </Button>
-                            <Button
-                              variant={statusUpdates[request.id] === "progress" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setStatusUpdates({ ...statusUpdates, [request.id]: "progress" })}
-                              data-testid={`button-status-progress-${request.id}`}
-                            >
-                              Progress
-                            </Button>
-                            <Button
-                              variant={statusUpdates[request.id] === "done" ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setStatusUpdates({ ...statusUpdates, [request.id]: "done" })}
-                              data-testid={`button-status-done-${request.id}`}
-                            >
-                              Done
-                            </Button>
                           </div>
                           <Button
                             onClick={() => completeMutation.mutate(request.id)}
