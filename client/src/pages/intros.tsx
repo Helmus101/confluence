@@ -59,7 +59,7 @@ export default function Intros() {
         title: variables.action === "accept" ? "Request accepted!" : "Request declined",
         description:
           variables.action === "accept"
-            ? "We've generated a message template to help you make the introduction."
+            ? "You can now reach out to make the introduction."
             : "The requester has been notified.",
       });
     },
