@@ -206,15 +206,22 @@ Example: "fintech intern in Paris" -> {"company":null,"industry":"fintech","role
 export async function generateConnectorToTargetMessage(params: {
   connectorName: string;
   requesterName: string;
+  requesterEmail: string;
   requesterPitch: string;
   targetCompany: string;
 }): Promise<IntroMessage> {
   try {
-    const prompt = `You are crafting a short, warm forwardable message for a connector to send to their contact at ${params.targetCompany}. Keep it professional and to the point (max 3 sentences). Include: who you are introducing, one reason they're a good fit, and a soft ask for a 10-15 minute chat or referral. Output JSON: {"subject":"...","body":"..."}.
-Connector name: ${params.connectorName}
-Requester name: ${params.requesterName}
-Requester short pitch: ${params.requesterPitch}
-Target contact context: ${params.targetCompany}`;
+    const prompt = `You are crafting a warm introduction message for a connector to send to their contact. Use this template structure:
+
+1. Greeting: "Hi [TARGET_CONTACT],"
+2. Introduction: "I'd like to introduce you to ${params.requesterName}. [One sentence describing what they do or their background/interests]"
+3. Reason: "I think you two should connect because [specific reason - shared interest, mutual benefit, etc.]"
+4. Contact Info: "I'm giving ${params.requesterName} your contact info, and I'm also giving them this email: ${params.requesterEmail}, so feel free to reach out directly. I think you'll have a great conversation."
+5. Signature: "Best, ${params.connectorName}"
+
+Keep it professional, warm, and concise. The description in step 2 should be based on: ${params.requesterPitch}
+
+Output JSON with "subject" and "body" keys where body is the full message.`;
 
     const content = await callDeepseek(
       "You are an expert at writing warm introduction emails. Respond with valid JSON only.",
@@ -224,13 +231,13 @@ Target contact context: ${params.targetCompany}`;
     const result = extractJSON(content);
     return {
       subject: result.subject || `Introduction: ${params.requesterName}`,
-      body: result.body || "",
+      body: result.body || `Hi,\n\nI'd like to introduce you to ${params.requesterName}. ${params.requesterPitch}\n\nI think you two should connect. Feel free to reach out directly at ${params.requesterEmail}.\n\nBest,\n${params.connectorName}`,
     };
   } catch (error) {
     console.error("Error generating message:", error);
     return {
       subject: `Introduction: ${params.requesterName}`,
-      body: `Hi! I wanted to introduce you to ${params.requesterName}. ${params.requesterPitch}`,
+      body: `Hi,\n\nI'd like to introduce you to ${params.requesterName}. ${params.requesterPitch}\n\nI'm giving them your contact info and giving you their email: ${params.requesterEmail}, so feel free to reach out directly.\n\nBest,\n${params.connectorName}`,
     };
   }
 }

@@ -20,6 +20,7 @@ export default function Intros() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [statusUpdates, setStatusUpdates] = useState<Record<string, string>>({});
+  const [acceptedMessages, setAcceptedMessages] = useState<Record<string, { message: string; email: string }>>({});
   const [requesterInfo, setRequesterInfo] = useState<Record<string, any>>({});
 
   const { data: sentRequests, isLoading: loadingSent } = useQuery<IntroRequest[]>({
@@ -287,12 +288,24 @@ export default function Intros() {
                         </div>
                       )}
                       {request.status === "accepted" && (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <div className="rounded-md border border-green-500/20 bg-green-500/5 p-3">
                             <p className="text-sm text-green-700 dark:text-green-400">
                               You've accepted this request. Make the intro when ready!
                             </p>
                           </div>
+                          {acceptedMessages[request.id] && (
+                            <div className="space-y-2 rounded-md border border-blue-500/20 bg-blue-500/5 p-3">
+                              <div>
+                                <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-2">Suggested intro message template:</p>
+                                <p className="text-sm whitespace-pre-wrap text-foreground">{acceptedMessages[request.id].message}</p>
+                              </div>
+                              <div className="pt-2 border-t border-blue-500/20">
+                                <p className="text-xs text-muted-foreground mb-1">Requester email (so they can contact you directly):</p>
+                                <p className="text-sm font-mono bg-background p-2 rounded border">{acceptedMessages[request.id].email}</p>
+                              </div>
+                            </div>
+                          )}
                           <div className="grid grid-cols-3 gap-2">
                             <Button
                               variant={statusUpdates[request.id] === "awaiting" ? "default" : "outline"}

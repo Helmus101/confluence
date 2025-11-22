@@ -413,14 +413,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate connector-to-target message if accepted
       let message = null;
+      let requesterEmail = null;
       if (action === "accept") {
         const requester = await storage.getUser(request.requesterId);
         const connector = await storage.getUser(userId);
         
         if (requester && connector) {
+          requesterEmail = requester.email;
           message = await generateConnectorToTargetMessage({
             connectorName: connector.name,
             requesterName: requester.name,
+            requesterEmail: requester.email,
             requesterPitch: request.reason,
             targetCompany: request.targetCompany,
           });
@@ -438,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relatedId: requestId,
       });
 
-      return res.json({ request: updated, message });
+      return res.json({ request: updated, message, requesterEmail });
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
