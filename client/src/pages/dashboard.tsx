@@ -229,61 +229,6 @@ export default function Dashboard() {
               {enrichMutation.isPending ? "Enriching..." : "Enrich Contacts"}
             </Button>
           </div>
-
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                whileHover={{ scale: 1.02, y: -5 }}
-                transition={{ type: "spring", stiffness: 300, damping: 10 }}
-              >
-                <Card className="hover-elevate relative overflow-hidden group">
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100"
-                    transition={{ duration: 0.3 }}
-                  />
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                    <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                    <motion.div
-                      animate={{ rotate: [-10, 10, -10] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    </motion.div>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <div className="text-2xl font-bold">--</div>
-                    <p className="text-xs text-muted-foreground">Completed intros</p>
-                  </CardContent>
-                </Card>
-              
-            <Card className="border-2 border-dashed hover-elevate">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Import Your LinkedIn Network</CardTitle>
-                    <CardDescription className="mt-1">
-                      {t("upload-csv")}
-                    </CardDescription>
-                  </div>
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Our AI will automatically extract company, industry, role, and seniority from your contacts.
-                  </p>
-                  <Button onClick={handleImportNetwork} className="w-full" data-testid="button-import-card">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Start Importing
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-          </div>
         )}
 
         {(isLoading || searchProgress > 0) && activeSearch && (

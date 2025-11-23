@@ -54,7 +54,7 @@ function Router() {
       <Route path="/onboard">{() => <ProtectedRoute component={Onboard} />}</Route>
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       {/* <Route path="/network">{() => <ProtectedRoute component={NetworkVisualization} />}</Route> */}
-      {/* <Route path="/request-intro">{() => <ProtectedRoute component={RequestIntro} />}</Route> */}
+      <Route path="/request-intro">{() => <ProtectedRoute component={RequestIntro} />}</Route>
       <Route path="/intros">{() => <ProtectedRoute component={Intros} />}</Route>
       {/* <Route path="/admin">{() => <ProtectedRoute component={Admin} />}</Route> */}
       <Route component={NotFound} />
