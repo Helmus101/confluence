@@ -147,21 +147,6 @@ export default function Dashboard() {
               <span className="font-heading text-xl font-semibold">Confluence</span>
             </div>
           </Link>
-          <div className="flex flex-1 items-center justify-center">
-            <form onSubmit={handleSearch} className="w-full max-w-2xl">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search with AI — 'fintech interns in NYC', 'product managers at Google', etc."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                  data-testid="input-search"
-                />
-              </div>
-            </form>
-          </div>
           <div className="flex items-center gap-1 ml-4">
             {contactsData?.contacts && contactsData.contacts.length > 0 && (
               <Button 
@@ -215,6 +200,99 @@ export default function Dashboard() {
           </h1>
           <p className="text-muted-foreground">{t("search-desc")}</p>
         </motion.div>
+
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+        >
+          <form onSubmit={handleSearch} className="w-full">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search with AI — 'fintech interns in NYC', 'product managers at Google', etc."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-search"
+              />
+            </div>
+          </form>
+        </motion.div>
+
+        {!activeSearch && contactsData?.contacts && contactsData.contacts.length > 0 && (
+          <motion.div
+            className="grid gap-4 md:grid-cols-3 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            variants={{
+              visible: {
+                transition: {
+                  staggerChildren: 0.1,
+                },
+              },
+            }}
+          >
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <Card className="hover-elevate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("your-network")}</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold" data-testid="text-contacts-count">
+                    {contactsData?.contacts?.length || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t("total-contacts")}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <Card className="hover-elevate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("introduction-requests")}</CardTitle>
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">{t("active-requests")}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <Card className="hover-elevate">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">--</div>
+                  <p className="text-xs text-muted-foreground">Completed intros</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
 
         {!activeSearch && contactsData?.contacts && contactsData.contacts.length > 0 && (
           <div className="mb-6">
