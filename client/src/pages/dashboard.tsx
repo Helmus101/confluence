@@ -176,11 +176,6 @@ export default function Dashboard() {
                 <span className="text-xs">{contactsData.contacts.filter((c: any) => c.enriched).length}/{contactsData.contacts.length} enriched</span>
               </Button>
             )}
-            <Link href="/network">
-              <Button variant="ghost" size="icon" data-testid="button-network-viz" className="hover-elevate">
-                <Eye className="h-5 w-5" />
-              </Button>
-            </Link>
             <Link href="/intros">
               <Button variant="ghost" size="icon" data-testid="button-intros" className="hover-elevate">
                 <Mail className="h-5 w-5" />

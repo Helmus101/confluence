@@ -181,54 +181,38 @@ export default function Onboard() {
         </div>
 
         {step === "upload" && (
-          <Tabs defaultValue="csv" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="csv" data-testid="tab-csv">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload CSV
-              </TabsTrigger>
-              <TabsTrigger value="manual" data-testid="tab-manual">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Manually
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="csv">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upload LinkedIn CSV</CardTitle>
-                  <CardDescription>
-                    Export your LinkedIn connections as a CSV file and upload it here. We recommend adding 20-50
-                    contacts to get started.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex h-64 flex-col items-center justify-center rounded-md border-2 border-dashed p-6">
-                      <Upload className="mb-4 h-12 w-12 text-muted-foreground" />
-                      <p className="mb-2 text-sm font-medium">
-                        {csvFile ? csvFile.name : "Drop your CSV file here, or click to browse"}
-                      </p>
-                      <p className="mb-4 text-xs text-muted-foreground">CSV files only, max 10MB</p>
-                      <Input
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileChange}
-                        className="max-w-xs"
-                        data-testid="input-csv-file"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleUploadCsv}
-                      disabled={!csvFile || uploadCsvMutation.isPending}
-                      className="w-full"
-                      data-testid="button-upload-csv"
-                    >
-                      {uploadCsvMutation.isPending ? "Uploading..." : "Upload & Continue"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload Your Contacts</CardTitle>
+              <CardDescription>
+                Export your LinkedIn connections as a CSV file and upload it here. We'll automatically enrich them with AI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex h-64 flex-col items-center justify-center rounded-md border-2 border-dashed p-6 hover:bg-accent/50 transition">
+                <Upload className="mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="mb-2 text-sm font-medium">
+                  {csvFile ? csvFile.name : "Drop your CSV file here, or click to browse"}
+                </p>
+                <p className="mb-4 text-xs text-muted-foreground">CSV files only</p>
+                <Input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="max-w-xs"
+                  data-testid="input-csv-file"
+                />
+              </div>
+              <Button
+                onClick={handleUploadCsv}
+                disabled={!csvFile || uploadCsvMutation.isPending}
+                className="w-full"
+                data-testid="button-upload-csv"
+              >
+                {uploadCsvMutation.isPending ? "Uploading..." : "Upload & Continue"}
+              </Button>
+              {/* Manual entry preserved for future use
+            <Tabs defaultValue="csv" className="w-full">
             <TabsContent value="manual">
               <Card>
                 <CardHeader>
@@ -329,8 +313,10 @@ export default function Onboard() {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </Tabs>
+            */}
+            </CardContent>
+          </Card>
         )}
 
         {step === "review" && (
