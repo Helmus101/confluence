@@ -425,7 +425,7 @@ export default function Landing() {
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
         >
-          <p>© 2024 Confluence. Warm introductions for early-career talent.</p>
+          <p>© 2025 Confluence. Warm introductions for early-career talent.</p>
         </motion.div>
       </footer>
     </div>
