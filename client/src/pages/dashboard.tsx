@@ -221,7 +221,7 @@ export default function Dashboard() {
           <p className="text-muted-foreground">{t("search-desc")}</p>
         </motion.div>
 
-        {!activeSearch && (
+        {!activeSearch && contactsData?.contacts && contactsData.contacts.length > 0 && (
           <div className="space-y-4">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
