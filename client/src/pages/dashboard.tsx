@@ -217,110 +217,18 @@ export default function Dashboard() {
         </motion.div>
 
         {!activeSearch && contactsData?.contacts && contactsData.contacts.length > 0 && (
-          <div className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
+          <div className="mb-6">
+            <Button
+              onClick={() => enrichMutation.mutate()}
+              disabled={enrichMutation.isPending || !contactsData.contacts.some((c: any) => !c.enriched)}
+              variant={contactsData.contacts.some((c: any) => !c.enriched) ? "default" : "ghost"}
+              size="sm"
+              data-testid="button-enrich-all"
             >
-              <Button
-                onClick={() => enrichMutation.mutate()}
-                disabled={enrichMutation.isPending}
-                variant="outline"
-                size="sm"
-                data-testid="button-enrich-all"
-              >
-                <Zap className="mr-2 h-4 w-4" />
-                {enrichMutation.isPending ? t("enriching") : t("enrich-contacts")}
-              </Button>
-            </motion.div>
-
-            <motion.div 
-              className="space-y-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <motion.div 
-                className="grid gap-4 md:grid-cols-3"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                whileHover={{ scale: 1.02, y: -5 }}
-                transition={{ type: "spring", stiffness: 300, damping: 10 }}
-              >
-                <Card className="hover-elevate relative overflow-hidden group">
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100"
-                    transition={{ duration: 0.3 }}
-                  />
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                    <CardTitle className="text-sm font-medium">{t("your-network")}</CardTitle>
-                    <motion.div
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                    >
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </motion.div>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <motion.div 
-                      className="text-2xl font-bold" 
-                      data-testid="text-contacts-count"
-                      key={contactsData?.contacts?.length}
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    >
-                      {contactsData?.contacts?.length || 0}
-                    </motion.div>
-                    <p className="text-xs text-muted-foreground">{t("total-contacts")}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                whileHover={{ scale: 1.02, y: -5 }}
-                transition={{ type: "spring", stiffness: 300, damping: 10 }}
-              >
-                <Card className="hover-elevate relative overflow-hidden group">
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100"
-                    transition={{ duration: 0.3 }}
-                  />
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                    <CardTitle className="text-sm font-medium">{t("introduction-requests")}</CardTitle>
-                    <motion.div
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                    </motion.div>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <div className="text-2xl font-bold">0</div>
-                    <p className="text-xs text-muted-foreground">{t("active-requests")}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <Sparkles className="mr-2 h-4 w-4" />
+              {enrichMutation.isPending ? "Enriching..." : "Enrich Contacts"}
+            </Button>
+          </div>
 
               <motion.div
                 variants={{
@@ -349,9 +257,7 @@ export default function Dashboard() {
                     <p className="text-xs text-muted-foreground">Completed intros</p>
                   </CardContent>
                 </Card>
-              </motion.div>
-            </motion.div>
-            
+              
             <Card className="border-2 border-dashed hover-elevate">
               <CardHeader>
                 <div className="flex items-center justify-between">
